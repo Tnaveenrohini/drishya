@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Drishya" parent="Theme.Material3.Dark.NoActionBar">
-        <item name="colorPrimary">@color/saffron</item>
-        <item name="colorOnPrimary">#1A1205</item>
-        <item name="colorSecondary">@color/green</item>
-        <item name="colorSurface">@color/bg</item>
+    <style name="Theme.Flikk" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/accent</item>
+        <item name="colorOnPrimary">#000000</item>
+        <item name="colorSecondary">@color/accent</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/text</item>
         <item name="android:colorBackground">@color/bg</item>
         <item name="android:windowBackground">@color/bg</item>
         <item name="android:statusBarColor">@color/bg</item>
@@ -12,7 +13,7 @@
         <item name="colorControlNormal">@color/text</item>
     </style>
 
-    <style name="Theme.Drishya.Player">
+    <style name="Theme.Flikk.Player">
         <item name="android:windowBackground">@android:color/black</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
@@ -25,5 +26,22 @@
         <item name="android:padding">10dp</item>
         <item name="android:scaleType">fitCenter</item>
         <item name="android:tint">@android:color/white</item>
+    </style>
+
+    <style name="Flikk.Tabs" parent="Widget.Material3.TabLayout">
+        <item name="android:background">@android:color/transparent</item>
+        <item name="tabIndicatorColor">@color/accent</item>
+        <item name="tabSelectedTextColor">@color/text</item>
+        <item name="tabTextColor">@color/muted</item>
+        <item name="tabIndicatorFullWidth">false</item>
+        <item name="tabMode">scrollable</item>
+        <item name="tabGravity">start</item>
+        <item name="tabRippleColor">@null</item>
+        <item name="tabTextAppearance">@style/Flikk.TabText</item>
+    </style>
+
+    <style name="Flikk.TabText" parent="TextAppearance.Material3.TitleSmall">
+        <item name="android:textSize">15sp</item>
+        <item name="textAllCaps">false</item>
     </style>
 </resources>

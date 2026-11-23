@@ -10,18 +10,31 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.drishya.player"
+        applicationId = "com.flikk.player"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
+    }
+
+    // Fixed key: prathi kotha build paata app meedha update ga install avthundi.
+    // Play Store ki vellettappudu private key vaadandi (ee file public repo lo undi).
+    signingConfigs {
+        create("flikk") {
+            storeFile = file("flikk.keystore")
+            storePassword = "flikk123"
+            keyAlias = "flikk"
+            keyPassword = "flikk123"
+        }
     }
 
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("flikk")
+        }
         release {
             isMinifyEnabled = false
-            // Debug key tho sign chestunnam, so release APK kuda direct ga install avthundi
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("flikk")
         }
     }
 
@@ -52,6 +65,7 @@ dependencies {
 
     implementation("androidx.media3:media3-exoplayer:$media3")
     implementation("androidx.media3:media3-ui:$media3")
+    implementation("androidx.media3:media3-session:$media3")
     // AC3 / E-AC3 / DTS / TrueHD audio (MKV movies lo common) — FFmpeg decoder, GPL-3.0
     implementation("org.jellyfin.media3:media3-ffmpeg-decoder:$media3+1")
 

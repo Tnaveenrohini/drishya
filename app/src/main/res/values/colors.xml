@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="saffron">#FF9933</color>
-    <color name="white_flag">#FFFFFF</color>
-    <color name="green">#138808</color>
-    <color name="navy">#1B2A8F</color>
-    <color name="bg">#0C0D12</color>
-    <color name="panel">#181A23</color>
-    <color name="text">#EEF0F6</color>
-    <color name="muted">#9AA1B3</color>
+    <!-- Cinema Black -->
+    <color name="bg">#000000</color>
+    <color name="surface">#141414</color>
+    <color name="line">#1F1F1F</color>
+    <color name="text">#FFFFFF</color>
+    <color name="muted">#A3A3A3</color>
+    <color name="accent">#3CCB6A</color>
+    <color name="brand_pink">#FF3D8B</color>
 </resources>

@@ -9,9 +9,13 @@
         android:id="@+id/player_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        app:buffered_color="#66FFFFFF"
+        app:played_color="@color/accent"
+        app:scrubber_color="@color/accent"
         app:show_buffering="when_playing"
         app:show_shuffle_button="false"
-        app:show_subtitle_button="true" />
+        app:show_subtitle_button="true"
+        app:unplayed_color="#33FFFFFF" />
 
     <LinearLayout
         android:id="@+id/top_bar"
@@ -38,8 +42,26 @@
             android:ellipsize="end"
             android:maxLines="1"
             android:textColor="@android:color/white"
-            android:textSize="16sp"
+            android:textSize="15sp"
             android:textStyle="bold" />
+
+        <ImageButton
+            android:id="@+id/btn_lock"
+            style="@style/PlayerIcon"
+            android:contentDescription="@string/lock"
+            android:src="@drawable/ic_lock" />
+
+        <ImageButton
+            android:id="@+id/btn_sleep"
+            style="@style/PlayerIcon"
+            android:contentDescription="@string/sleep_timer"
+            android:src="@drawable/ic_moon" />
+
+        <ImageButton
+            android:id="@+id/btn_bg"
+            style="@style/PlayerIcon"
+            android:contentDescription="@string/background_play"
+            android:src="@drawable/ic_headphones" />
 
         <ImageButton
             android:id="@+id/btn_subtitle"
@@ -48,23 +70,93 @@
             android:src="@drawable/ic_subtitle" />
 
         <ImageButton
-            android:id="@+id/btn_resize"
+            android:id="@+id/btn_more"
             style="@style/PlayerIcon"
-            android:contentDescription="@string/resize"
-            android:src="@drawable/ic_resize" />
-
-        <ImageButton
-            android:id="@+id/btn_rotate"
-            style="@style/PlayerIcon"
-            android:contentDescription="@string/rotate"
-            android:src="@drawable/ic_rotate" />
-
-        <ImageButton
-            android:id="@+id/btn_pip"
-            style="@style/PlayerIcon"
-            android:contentDescription="@string/pip"
-            android:src="@drawable/ic_pip" />
+            android:contentDescription="@string/more"
+            android:src="@drawable/ic_more" />
     </LinearLayout>
+
+    <!-- Brightness level (left) -->
+    <FrameLayout
+        android:id="@+id/level_left"
+        android:layout_width="48dp"
+        android:layout_height="200dp"
+        android:layout_gravity="start|center_vertical"
+        android:layout_marginStart="40dp"
+        android:background="@drawable/bg_level"
+        android:padding="6dp"
+        android:visibility="invisible">
+
+        <View
+            android:id="@+id/level_left_fill"
+            android:layout_width="match_parent"
+            android:layout_height="20dp"
+            android:layout_gravity="bottom"
+            android:background="@drawable/bg_level_fill" />
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="bottom|center_horizontal"
+            android:layout_marginBottom="8dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_sun"
+            android:tint="#000000" />
+
+        <TextView
+            android:id="@+id/level_left_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            android:layout_marginTop="4dp"
+            android:gravity="center"
+            android:shadowColor="#99000000"
+            android:shadowRadius="3"
+            android:textColor="@android:color/white"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+    </FrameLayout>
+
+    <!-- Volume level (right) -->
+    <FrameLayout
+        android:id="@+id/level_right"
+        android:layout_width="48dp"
+        android:layout_height="200dp"
+        android:layout_gravity="end|center_vertical"
+        android:layout_marginEnd="40dp"
+        android:background="@drawable/bg_level"
+        android:padding="6dp"
+        android:visibility="invisible">
+
+        <View
+            android:id="@+id/level_right_fill"
+            android:layout_width="match_parent"
+            android:layout_height="20dp"
+            android:layout_gravity="bottom"
+            android:background="@drawable/bg_level_fill" />
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="bottom|center_horizontal"
+            android:layout_marginBottom="8dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_volume"
+            android:tint="#000000" />
+
+        <TextView
+            android:id="@+id/level_right_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            android:layout_marginTop="4dp"
+            android:gravity="center"
+            android:shadowColor="#99000000"
+            android:shadowRadius="3"
+            android:textColor="@android:color/white"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+    </FrameLayout>
 
     <TextView
         android:id="@+id/hud"
@@ -76,7 +168,41 @@
         android:paddingHorizontal="22dp"
         android:paddingVertical="14dp"
         android:textColor="@android:color/white"
-        android:textSize="20sp"
+        android:textSize="17sp"
         android:textStyle="bold"
         android:visibility="gone" />
+
+    <!-- Gesture lock pill -->
+    <LinearLayout
+        android:id="@+id/unlock_pill"
+        android:layout_width="wrap_content"
+        android:layout_height="60dp"
+        android:layout_gravity="center"
+        android:background="@drawable/bg_pill"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="9dp"
+        android:paddingEnd="22dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:background="@drawable/bg_accent_circle"
+            android:contentDescription="@null"
+            android:padding="10dp"
+            android:src="@drawable/ic_lock"
+            android:tint="#000000" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:text="@string/unlock_hint"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 </FrameLayout>

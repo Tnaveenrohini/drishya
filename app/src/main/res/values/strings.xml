@@ -1,16 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Drishya</string>
-    <string name="all_videos">All videos</string>
-    <string name="need_permission">Mee phone lo videos chupinchadaniki permission kavali.\nVideos ekkadiki upload avvavu.</string>
-    <string name="no_videos">Phone lo videos emi dorakaledu.</string>
+    <string name="app_name" translatable="false">Flikk</string>
+    <string name="brand" translatable="false">FLIKK</string>
+
+    <string name="title_videos">Videos</string>
+    <string name="tab_all">All</string>
+    <string name="tab_folders">Folders</string>
+    <string name="tab_playlists">Playlists</string>
+    <string name="tab_recent">Recent</string>
+
+    <string name="need_permission">Allow access so Flikk can show the videos on your phone.\nNothing is uploaded anywhere.</string>
+    <string name="no_videos">No videos found on this phone.</string>
+    <string name="no_recent">Videos you watch will show up here.</string>
+    <string name="empty_playlist">This playlist is empty.\nLong-press any video to add it here.</string>
     <string name="allow">Allow</string>
     <string name="search">Search</string>
-    <string name="search_hint">Video peru vethakandi…</string>
+    <string name="search_hint">Search videos…</string>
     <string name="refresh">Refresh</string>
+    <string name="language">Language</string>
+    <string name="language_system">Phone default</string>
+    <string name="language_english" translatable="false">English</string>
+    <string name="language_telugu" translatable="false">తెలుగు</string>
+    <string name="count_videos">%d videos</string>
+    <string name="count_summary">%1$d videos · %2$d folders</string>
+
+    <string name="continue_watching">Continue watching</string>
+    <string name="paused_at">Paused at %s</string>
+    <string name="resume">Resume</string>
+
+    <string name="favourites">Favourites</string>
+    <string name="add_favourite">Add to Favourites</string>
+    <string name="remove_favourite">Remove from Favourites</string>
+    <string name="add_to_playlist">Add to playlist…</string>
+    <string name="remove_from_playlist">Remove from this playlist</string>
+    <string name="new_playlist">New playlist</string>
+    <string name="playlist_name">Playlist name</string>
+    <string name="create">Create</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="delete_playlist">Delete playlist “%s”?</string>
+    <string name="added_to">Added to %s</string>
+
     <string name="back">Back</string>
+    <string name="more">More</string>
     <string name="load_subtitles">Load subtitles</string>
+    <string name="subtitles_loaded">Subtitles: %s</string>
     <string name="resize">Resize</string>
+    <string name="resize_fit">Fit</string>
+    <string name="resize_zoom">Zoom (crop)</string>
+    <string name="resize_stretch">Stretch</string>
     <string name="rotate">Rotate</string>
     <string name="pip">Picture-in-picture</string>
+    <string name="no_pip">This phone doesn\'t support picture-in-picture</string>
+    <string name="pip_failed">Couldn\'t start picture-in-picture</string>
+    <string name="resumed_from">Resumed from %s</string>
+    <string name="play_error">Couldn\'t play this video\n%s</string>
+    <string name="seek_back">« 10s</string>
+    <string name="seek_forward">10s »</string>
+
+    <string name="lock">Lock screen</string>
+    <string name="unlock_hint">Screen locked · press and hold to unlock</string>
+
+    <string name="sleep_timer">Sleep timer</string>
+    <string name="sleep_off">Off</string>
+    <string name="sleep_minutes">%d minutes</string>
+    <string name="sleep_end">End of this video</string>
+    <string name="sleep_set">Stops in %s</string>
+    <string name="sleep_set_end">Stops after this video</string>
+    <string name="sleep_cancelled">Sleep timer off</string>
+
+    <string name="background_play">Background play</string>
+    <string name="background_on">Background play ON\nKeeps playing when you leave the app</string>
+    <string name="background_off">Background play OFF</string>
 </resources>

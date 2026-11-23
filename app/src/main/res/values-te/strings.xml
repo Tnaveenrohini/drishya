@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="title_videos">వీడియోలు</string>
+    <string name="tab_all">అన్నీ</string>
+    <string name="tab_folders">ఫోల్డర్లు</string>
+    <string name="tab_playlists">ప్లేలిస్ట్‌లు</string>
+    <string name="tab_recent">ఇటీవలవి</string>
+
+    <string name="need_permission">మీ ఫోన్‌లోని వీడియోలు చూపించడానికి Flikk కి అనుమతి కావాలి.\nఏదీ ఎక్కడికీ అప్‌లోడ్ అవ్వదు.</string>
+    <string name="no_videos">ఈ ఫోన్‌లో వీడియోలు ఏవీ దొరకలేదు.</string>
+    <string name="no_recent">మీరు చూసిన వీడియోలు ఇక్కడ కనిపిస్తాయి.</string>
+    <string name="empty_playlist">ఈ ప్లేలిస్ట్ ఖాళీగా ఉంది.\nఏ వీడియోనైనా నొక్కి పట్టుకుని ఇక్కడ చేర్చండి.</string>
+    <string name="allow">అనుమతించు</string>
+    <string name="search">వెతుకు</string>
+    <string name="search_hint">వీడియో పేరు వెతకండి…</string>
+    <string name="refresh">రిఫ్రెష్</string>
+    <string name="language">భాష</string>
+    <string name="language_system">ఫోన్ భాష</string>
+    <string name="count_videos">%d వీడియోలు</string>
+    <string name="count_summary">%1$d వీడియోలు · %2$d ఫోల్డర్లు</string>
+
+    <string name="continue_watching">చూడటం కొనసాగించండి</string>
+    <string name="paused_at">%s వద్ద ఆపారు</string>
+    <string name="resume">కొనసాగించు</string>
+
+    <string name="favourites">ఇష్టమైనవి</string>
+    <string name="add_favourite">ఇష్టమైనవాటికి చేర్చు</string>
+    <string name="remove_favourite">ఇష్టమైనవాటి నుండి తీసివేయి</string>
+    <string name="add_to_playlist">ప్లేలిస్ట్‌కి చేర్చు…</string>
+    <string name="remove_from_playlist">ఈ ప్లేలిస్ట్ నుండి తీసివేయి</string>
+    <string name="new_playlist">కొత్త ప్లేలిస్ట్</string>
+    <string name="playlist_name">ప్లేలిస్ట్ పేరు</string>
+    <string name="create">సృష్టించు</string>
+    <string name="cancel">రద్దు</string>
+    <string name="delete">తొలగించు</string>
+    <string name="delete_playlist">“%s” ప్లేలిస్ట్ తొలగించాలా?</string>
+    <string name="added_to">%s కి చేర్చబడింది</string>
+
+    <string name="back">వెనక్కి</string>
+    <string name="more">మరిన్ని</string>
+    <string name="load_subtitles">సబ్‌టైటిల్స్ లోడ్ చేయి</string>
+    <string name="subtitles_loaded">సబ్‌టైటిల్స్: %s</string>
+    <string name="resize">సైజు</string>
+    <string name="resize_fit">ఫిట్</string>
+    <string name="resize_zoom">జూమ్ (క్రాప్)</string>
+    <string name="resize_stretch">స్ట్రెచ్</string>
+    <string name="rotate">తిప్పు</string>
+    <string name="pip">పిక్చర్-ఇన్-పిక్చర్</string>
+    <string name="no_pip">ఈ ఫోన్‌లో పిక్చర్-ఇన్-పిక్చర్ సపోర్ట్ లేదు</string>
+    <string name="pip_failed">పిక్చర్-ఇన్-పిక్చర్ మొదలవ్వలేదు</string>
+    <string name="resumed_from">%s నుండి కొనసాగుతోంది</string>
+    <string name="play_error">ఈ వీడియో ప్లే కాలేదు\n%s</string>
+    <string name="seek_back">« 10సె</string>
+    <string name="seek_forward">10సె »</string>
+
+    <string name="lock">స్క్రీన్ లాక్</string>
+    <string name="unlock_hint">స్క్రీన్ లాక్ అయింది · అన్‌లాక్ కోసం నొక్కి పట్టుకోండి</string>
+
+    <string name="sleep_timer">స్లీప్ టైమర్</string>
+    <string name="sleep_off">ఆఫ్</string>
+    <string name="sleep_minutes">%d నిమిషాలు</string>
+    <string name="sleep_end">ఈ వీడియో అయ్యాక</string>
+    <string name="sleep_set">%s లో ఆగుతుంది</string>
+    <string name="sleep_set_end">ఈ వీడియో అయ్యాక ఆగుతుంది</string>
+    <string name="sleep_cancelled">స్లీప్ టైమర్ ఆఫ్</string>
+
+    <string name="background_play">బ్యాక్‌గ్రౌండ్ ప్లే</string>
+    <string name="background_on">బ్యాక్‌గ్రౌండ్ ప్లే ఆన్\nయాప్ నుండి బయటకు వెళ్ళినా వినిపిస్తుంది</string>
+    <string name="background_off">బ్యాక్‌గ్రౌండ్ ప్లే ఆఫ్</string>
+</resources>
