@@ -72,4 +72,30 @@
     <string name="background_play">Background play</string>
     <string name="background_on">Background play ON\nKeeps playing when you leave the app</string>
     <string name="background_off">Background play OFF</string>
+
+    <string name="theme_colour">Theme colour</string>
+    <string name="colour_green">Green</string>
+    <string name="colour_pink">Flikk Pink</string>
+    <string name="colour_blue">Blue</string>
+    <string name="colour_saffron">Saffron</string>
+    <string name="colour_purple">Purple</string>
+    <string name="colour_cyan">Cyan</string>
+
+    <string name="delete_video">Delete from phone</string>
+    <string name="delete_confirm">Delete “%s” from your phone?\nThis can\'t be undone.</string>
+    <string name="deleted">Deleted</string>
+    <string name="delete_failed">Couldn\'t delete this video</string>
+
+    <string name="open_url">Open network stream</string>
+    <string name="url_hint">https://… (.mp4, .m3u8, .mpd)</string>
+    <string name="play">Play</string>
+    <string name="bad_url">Enter a link starting with http:// or https://</string>
+
+    <string name="equalizer">Equalizer</string>
+    <string name="eq_off">Off (normal sound)</string>
+    <string name="eq_unavailable">Equalizer isn\'t available on this phone</string>
+    <string name="volume_boost">Volume boost</string>
+    <string name="boost_normal">Normal</string>
+    <string name="boost_mid" formatted="false">+50%</string>
+    <string name="boost_high" formatted="false">+100% (loud)</string>
 </resources>

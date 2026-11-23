@@ -16,7 +16,7 @@
         android:background="@drawable/bg_card"
         android:contentDescription="@null"
         android:padding="12dp"
-        android:tint="@color/accent" />
+        android:tint="?attr/flikkAccent" />
 
     <LinearLayout
         android:layout_width="0dp"

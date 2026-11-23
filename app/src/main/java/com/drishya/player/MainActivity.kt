@@ -1,10 +1,17 @@
 package com.drishya.player
 
 import android.Manifest
+import android.app.RecoverableSecurityException
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore
+import android.text.InputType
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -17,6 +24,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
@@ -62,7 +70,27 @@ class MainActivity : AppCompatActivity() {
         override fun handleOnBackPressed() = goBack()
     }
 
+    // ---- delete (Android 10 kinda permission, 11+ system confirm dialog)
+    private var pendingDelete: Video? = null
+    private var retryDeleteAfterGrant = false
+
+    private val deleteLauncher =
+        registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { res ->
+            val v = pendingDelete
+            if (res.resultCode == RESULT_OK && v != null) {
+                if (retryDeleteAfterGrant) deleteNow(v) else onDeleted(v)
+            }
+            retryDeleteAfterGrant = false
+        }
+
+    private val writePermLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+            val v = pendingDelete
+            if (ok && v != null) deleteNow(v)
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        ThemeColors.apply(this)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         toolbar = findViewById(R.id.toolbar)
@@ -297,22 +325,127 @@ class MainActivity : AppCompatActivity() {
             getString(R.string.add_to_playlist),
         )
         if (inPlaylist != null) options += getString(R.string.remove_from_playlist)
+        options += getString(R.string.delete_video)
+        val deleteIndex = options.size - 1
         MaterialAlertDialogBuilder(this)
             .setTitle(v.name)
             .setItems(options.toTypedArray()) { _, which ->
-                when (which) {
-                    0 -> {
+                when {
+                    which == deleteIndex -> askDelete(v)
+                    which == 0 -> {
                         Library.toggleFavourite(this, uri)
                         if (!fav) toast(getString(R.string.added_to, getString(R.string.favourites)))
                         render()
                     }
-                    1 -> choosePlaylist(uri)
-                    2 -> {
-                        Library.remove(this, inPlaylist!!, uri)
+                    which == 1 -> choosePlaylist(uri)
+                    which == 2 && inPlaylist != null -> {
+                        Library.remove(this, inPlaylist, uri)
                         render()
                     }
                 }
             }
+            .show()
+    }
+
+    // ------------------------------------------------------------ delete
+
+    private fun askDelete(v: Video) {
+        pendingDelete = v
+        if (Build.VERSION.SDK_INT >= 30) {
+            // Android 11+: system ye "Allow Flikk to delete?" ani adugutundi
+            try {
+                val pi = MediaStore.createDeleteRequest(contentResolver, listOf(v.uri))
+                retryDeleteAfterGrant = false
+                deleteLauncher.launch(IntentSenderRequest.Builder(pi.intentSender).build())
+            } catch (_: Exception) {
+                toast(getString(R.string.delete_failed))
+            }
+            return
+        }
+        MaterialAlertDialogBuilder(this)
+            .setMessage(getString(R.string.delete_confirm, v.name))
+            .setPositiveButton(R.string.delete) { _, _ ->
+                if (Build.VERSION.SDK_INT <= 28 &&
+                    !granted(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                ) {
+                    writePermLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                } else {
+                    deleteNow(v)
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun deleteNow(v: Video) {
+        try {
+            val rows = contentResolver.delete(v.uri, null, null)
+            if (rows > 0) onDeleted(v) else toast(getString(R.string.delete_failed))
+        } catch (e: SecurityException) {
+            if (Build.VERSION.SDK_INT == 29 && e is RecoverableSecurityException) {
+                retryDeleteAfterGrant = true
+                deleteLauncher.launch(
+                    IntentSenderRequest.Builder(e.userAction.actionIntent.intentSender).build()
+                )
+            } else {
+                toast(getString(R.string.delete_failed))
+            }
+        } catch (_: Exception) {
+            toast(getString(R.string.delete_failed))
+        }
+    }
+
+    private fun onDeleted(v: Video) {
+        pendingDelete = null
+        Library.forget(this, v.uri.toString())
+        allVideos = allVideos.filter { it.uri != v.uri }
+        toast(getString(R.string.deleted))
+        render()
+    }
+
+    // ------------------------------------------------------------ theme + network stream
+
+    private fun chooseTheme() {
+        val opts = ThemeColors.options
+        val labels = opts.map { o ->
+            SpannableString("●   " + getString(o.label)).apply {
+                setSpan(ForegroundColorSpan(o.color), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            }
+        }.toTypedArray<CharSequence>()
+        val checked = opts.indexOf(ThemeColors.current(this))
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.theme_colour)
+            .setSingleChoiceItems(labels, checked) { d, which ->
+                d.dismiss()
+                ThemeColors.set(this, opts[which].key)
+                recreate()
+            }
+            .show()
+    }
+
+    private fun openUrlDialog() {
+        val input = EditText(this).apply {
+            hint = getString(R.string.url_hint)
+            isSingleLine = true
+            inputType = InputType.TYPE_TEXT_VARIATION_URI or InputType.TYPE_CLASS_TEXT
+        }
+        val pad = (20 * resources.displayMetrics.density).toInt()
+        val box = FrameLayout(this).apply {
+            setPadding(pad, pad / 2, pad, 0)
+            addView(input)
+        }
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.open_url)
+            .setView(box)
+            .setPositiveButton(R.string.play) { _, _ ->
+                val url = input.text.toString().trim()
+                if (url.startsWith("http://", true) || url.startsWith("https://", true)) {
+                    startActivity(Intent(this, PlayerActivity::class.java).setData(Uri.parse(url)))
+                } else {
+                    toast(getString(R.string.bad_url))
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
             .show()
     }
 
@@ -424,6 +557,8 @@ class MainActivity : AppCompatActivity() {
         when (item.itemId) {
             R.id.action_refresh -> refresh()
             R.id.action_language -> chooseLanguage()
+            R.id.action_theme -> chooseTheme()
+            R.id.action_open_url -> openUrlDialog()
             else -> return super.onOptionsItemSelected(item)
         }
         return true

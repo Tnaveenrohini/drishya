@@ -47,6 +47,7 @@ import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.media3.ui.DefaultTimeBar
 import androidx.media3.ui.PlayerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlin.math.abs
@@ -126,6 +127,7 @@ class PlayerActivity : AppCompatActivity() {
     // ---------------------------------------------------------------- lifecycle
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        ThemeColors.apply(this)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_player)
         playerView = findViewById(R.id.player_view)
@@ -177,6 +179,7 @@ class PlayerActivity : AppCompatActivity() {
         setupGestures()
         handleIntent(intent)
         updateBgIcon()
+        applyAccent()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -264,12 +267,21 @@ class PlayerActivity : AppCompatActivity() {
         i.data = null
     }
 
-    private fun buildItem(uri: Uri, title: String): MediaItem =
-        MediaItem.Builder()
+    private fun buildItem(uri: Uri, title: String): MediaItem {
+        val b = MediaItem.Builder()
             .setUri(uri)
             .setMediaId(uri.toString())
             .setMediaMetadata(MediaMetadata.Builder().setTitle(title).build())
-            .build()
+        // Network streams: link lo .m3u8 / .mpd unte HLS / DASH ani cheppali
+        val s = uri.toString().lowercase()
+        if (uri.scheme == "http" || uri.scheme == "https") {
+            when {
+                ".m3u8" in s -> b.setMimeType(MimeTypes.APPLICATION_M3U8)
+                ".mpd" in s -> b.setMimeType(MimeTypes.APPLICATION_MPD)
+            }
+        }
+        return b.build()
+    }
 
     private fun displayName(uri: Uri): String {
         try {
@@ -426,7 +438,7 @@ class PlayerActivity : AppCompatActivity() {
     private fun updateSleepIcon() {
         val on = PlayerHolder.sleepActive()
         btnSleep.imageTintList = ColorStateList.valueOf(
-            if (on) ContextCompat.getColor(this, R.color.accent) else 0xFFFFFFFF.toInt()
+            if (on) ThemeColors.accent(this) else 0xFFFFFFFF.toInt()
         )
     }
 
@@ -445,8 +457,49 @@ class PlayerActivity : AppCompatActivity() {
 
     private fun updateBgIcon() {
         btnBg.imageTintList = ColorStateList.valueOf(
-            if (bgPlay) ContextCompat.getColor(this, R.color.accent) else 0xFFFFFFFF.toInt()
+            if (bgPlay) ThemeColors.accent(this) else 0xFFFFFFFF.toInt()
         )
+    }
+
+    private fun applyAccent() {
+        val a = ThemeColors.accent(this)
+        playerView.findViewById<DefaultTimeBar>(androidx.media3.ui.R.id.exo_progress)?.apply {
+            setPlayedColor(a)
+            setScrubberColor(a)
+        }
+    }
+
+    private fun equalizerDialog() {
+        val names = PlayerHolder.presetNames()
+        if (names.isEmpty()) {
+            showHud(getString(R.string.eq_unavailable), 1500)
+            return
+        }
+        val labels = (listOf(getString(R.string.eq_off)) + names).toTypedArray()
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.equalizer)
+            .setSingleChoiceItems(labels, PlayerHolder.eqPreset + 1) { d, which ->
+                d.dismiss()
+                if (PlayerHolder.setPreset(which - 1)) showHud(labels[which])
+                else showHud(getString(R.string.eq_unavailable), 1500)
+            }
+            .show()
+    }
+
+    private fun boostDialog() {
+        val labels = arrayOf(
+            getString(R.string.boost_normal),
+            getString(R.string.boost_mid),
+            getString(R.string.boost_high),
+        )
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.volume_boost)
+            .setSingleChoiceItems(labels, PlayerHolder.boostLevel) { d, which ->
+                d.dismiss()
+                if (PlayerHolder.setBoost(which)) showHud("${getString(R.string.volume_boost)}: ${labels[which]}")
+                else showHud(getString(R.string.eq_unavailable), 1500)
+            }
+            .show()
     }
 
     private fun showMore(anchor: View) {
@@ -454,6 +507,8 @@ class PlayerActivity : AppCompatActivity() {
             menuInflater.inflate(R.menu.player_more, menu)
             setOnMenuItemClickListener {
                 when (it.itemId) {
+                    R.id.m_eq -> equalizerDialog()
+                    R.id.m_boost -> boostDialog()
                     R.id.m_resize -> cycleResize()
                     R.id.m_rotate -> rotate()
                     R.id.m_pip -> enterPip()

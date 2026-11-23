@@ -67,4 +67,30 @@
     <string name="background_play">బ్యాక్‌గ్రౌండ్ ప్లే</string>
     <string name="background_on">బ్యాక్‌గ్రౌండ్ ప్లే ఆన్\nయాప్ నుండి బయటకు వెళ్ళినా వినిపిస్తుంది</string>
     <string name="background_off">బ్యాక్‌గ్రౌండ్ ప్లే ఆఫ్</string>
+
+    <string name="theme_colour">థీమ్ రంగు</string>
+    <string name="colour_green">ఆకుపచ్చ</string>
+    <string name="colour_pink">Flikk పింక్</string>
+    <string name="colour_blue">నీలం</string>
+    <string name="colour_saffron">కాషాయం</string>
+    <string name="colour_purple">ఊదా</string>
+    <string name="colour_cyan">సియాన్</string>
+
+    <string name="delete_video">ఫోన్ నుండి తొలగించు</string>
+    <string name="delete_confirm">“%s” ని మీ ఫోన్ నుండి తొలగించాలా?\nమళ్ళీ తిరిగి రాదు.</string>
+    <string name="deleted">తొలగించబడింది</string>
+    <string name="delete_failed">ఈ వీడియో తొలగించలేకపోయాం</string>
+
+    <string name="open_url">నెట్‌వర్క్ స్ట్రీమ్ ఓపెన్ చేయి</string>
+    <string name="url_hint">https://… (.mp4, .m3u8, .mpd)</string>
+    <string name="play">ప్లే</string>
+    <string name="bad_url">http:// లేదా https:// తో మొదలయ్యే లింక్ ఇవ్వండి</string>
+
+    <string name="equalizer">ఈక్వలైజర్</string>
+    <string name="eq_off">ఆఫ్ (సాధారణ సౌండ్)</string>
+    <string name="eq_unavailable">ఈ ఫోన్‌లో ఈక్వలైజర్ అందుబాటులో లేదు</string>
+    <string name="volume_boost">వాల్యూమ్ బూస్ట్</string>
+    <string name="boost_normal">సాధారణం</string>
+    <string name="boost_mid" formatted="false">+50%</string>
+    <string name="boost_high" formatted="false">+100% (గట్టిగా)</string>
 </resources>

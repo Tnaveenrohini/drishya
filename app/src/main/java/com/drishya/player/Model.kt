@@ -161,6 +161,15 @@ object Library {
         return get(c, key)?.uris?.mapNotNull { byUri[it] } ?: emptyList()
     }
 
+    /** Video phone nunchi delete ayyaka anni lists nunchi teeseyyi. */
+    fun forget(c: Context, uri: String) {
+        val all = readAll(c)
+        all.values.forEach { it.remove(uri) }
+        writeAll(c, all)
+        prefs(c).edit().remove(PLAYED + uri).apply()
+        c.getSharedPreferences(Prefs.RESUME, Context.MODE_PRIVATE).edit().remove(uri).apply()
+    }
+
     fun markPlayed(c: Context, uri: String) {
         prefs(c).edit().putLong(PLAYED + uri, System.currentTimeMillis()).apply()
     }
