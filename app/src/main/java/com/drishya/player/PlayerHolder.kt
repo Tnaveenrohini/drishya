@@ -183,6 +183,7 @@ object PlayerHolder {
     const val MODE_ONE = 1
     const val MODE_ONCE = 2
     const val MODE_SHUFFLE = 3
+    const val MODE_OFF = 4
 
     var playMode = MODE_ALL
         private set

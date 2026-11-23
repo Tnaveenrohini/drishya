@@ -144,6 +144,7 @@ class PlayerActivity : AppCompatActivity() {
     private var zoom = 1f
     private var zooming = false
 
+    private var redirected = false
     private var subOriginal: Uri? = null
     private var subName = ""
     private var subDelayMs = 0L
@@ -332,7 +333,7 @@ class PlayerActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         handler.removeCallbacksAndMessages(null)
-        if (isFinishing) {
+        if (isFinishing && !redirected) {
             PlayerHolder.peek()?.let {
                 it.stop()
                 it.clearMediaItems()
@@ -383,7 +384,12 @@ class PlayerActivity : AppCompatActivity() {
                 pendingItems = listOf(buildItem(data, name, audio = audioFlag))
                 pendingIndex = 0
             }
-            // Notification nunchi vachhamu: already playing video ne chupistham
+            // Notification nunchi vachhamu: paata aithe music screen, video aithe ide
+            PlayerHolder.peek()?.currentMediaItem?.mediaMetadata?.mediaType == MediaMetadata.MEDIA_TYPE_MUSIC -> {
+                redirected = true
+                startActivity(Intent(this, MusicActivity::class.java))
+                finish()
+            }
             (PlayerHolder.peek()?.mediaItemCount ?: 0) > 0 -> pendingItems = null
             else -> finish()
         }

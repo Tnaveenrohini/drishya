@@ -183,4 +183,11 @@
     <string name="next">Next</string>
     <string name="play_pause">Play / Pause</string>
     <string name="splash_tagline">MADE IN INDIA</string>
+    <string name="music_progress">Track: %1$d / %2$d  ·  Progress: %3$s / %4$s</string>
+    <string name="queue">Queue</string>
+    <string name="search_songs">Search songs…</string>
+    <string name="playback_speed">Playback speed</string>
+    <string name="repeat_off">Repeat off</string>
+    <string name="language_tamil" translatable="false">தமிழ்</string>
+    <string name="language_hindi" translatable="false">हिन्दी</string>
 </resources>

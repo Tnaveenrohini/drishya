@@ -41,6 +41,12 @@
             android:exported="false" />
 
         <activity
+            android:name=".MusicActivity"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.Flikk.Music" />
+
+        <activity
             android:name=".PlayerActivity"
             android:exported="true"
             android:launchMode="singleTask"

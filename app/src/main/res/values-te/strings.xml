@@ -178,4 +178,9 @@
     <string name="next">తర్వాతది</string>
     <string name="play_pause">ప్లే / పాజ్</string>
     <string name="splash_tagline">మేడ్ ఇన్ ఇండియా</string>
+    <string name="music_progress">ట్రాక్: %1$d / %2$d  ·  ప్రోగ్రెస్: %3$s / %4$s</string>
+    <string name="queue">క్యూ</string>
+    <string name="search_songs">పాటలు వెతకండి…</string>
+    <string name="playback_speed">ప్లేబ్యాక్ వేగం</string>
+    <string name="repeat_off">రిపీట్ ఆఫ్</string>
 </resources>

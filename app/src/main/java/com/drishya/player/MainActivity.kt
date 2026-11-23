@@ -411,7 +411,7 @@ class MainActivity : AppCompatActivity() {
         if (!loaded) return
 
         if (section == Section.MUSIC) {
-            miniBar.visibility = View.GONE
+            updateMusicBar()
             renderMusic(query.trim().lowercase())
             return
         }
@@ -765,10 +765,32 @@ class MainActivity : AppCompatActivity() {
             Row(t.title, "$artist · ${formatTime(t.durationMs)}", R.drawable.ic_music, onClick = {
                 launchPlayer(
                     list.map { it.uri.toString() }, list.map { it.title }, i,
-                    audio = true, artists = list.map { it.artist },
+                    audio = true, artists = list.map { it.artist }, durations = list.map { it.durationMs },
                 )
             })
         })
+    }
+
+    /** Music tab lo "ippudu play avuthunna paata" bar — tap chesthe music screen. */
+    private fun updateMusicBar() {
+        val p = PlayerHolder.peek()
+        val item = p?.currentMediaItem
+        if (p == null || item == null || item.mediaMetadata.mediaType != androidx.media3.common.MediaMetadata.MEDIA_TYPE_MUSIC) {
+            miniBar.visibility = View.GONE
+            return
+        }
+        miniBar.visibility = View.VISIBLE
+        miniTitle.text = item.mediaMetadata.title
+        miniSub.text = item.mediaMetadata.artist ?: getString(R.string.now_playing)
+        val art = p.mediaMetadata.artworkData
+        if (art != null) {
+            miniThumb.setImageBitmap(android.graphics.BitmapFactory.decodeByteArray(art, 0, art.size))
+        } else {
+            miniThumb.setImageResource(R.drawable.ic_music)
+        }
+        val open = View.OnClickListener { startActivity(Intent(this, MusicActivity::class.java)) }
+        miniBar.setOnClickListener(open)
+        findViewById<ImageButton>(R.id.mini_play).setOnClickListener(open)
     }
 
     // ------------------------------------------------------------ Me (settings)
@@ -780,6 +802,8 @@ class MainActivity : AppCompatActivity() {
         val langTag = AppCompatDelegate.getApplicationLocales().toLanguageTags()
         val langLabel = when {
             langTag.startsWith("te") -> getString(R.string.language_telugu)
+            langTag.startsWith("ta") -> getString(R.string.language_tamil)
+            langTag.startsWith("hi") -> getString(R.string.language_hindi)
             langTag.startsWith("en") -> getString(R.string.language_english)
             else -> getString(R.string.language_system)
         }
@@ -806,11 +830,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun chooseLanguage() {
-        val tags = arrayOf("", "en", "te")
+        val tags = arrayOf("", "en", "te", "ta", "hi")
         val labels = arrayOf(
             getString(R.string.language_system),
             getString(R.string.language_english),
             getString(R.string.language_telugu),
+            getString(R.string.language_tamil),
+            getString(R.string.language_hindi),
         )
         val current = AppCompatDelegate.getApplicationLocales().toLanguageTags()
         val checked = tags.indexOfFirst { it.isNotEmpty() && current.startsWith(it) }.let { if (it < 0) 0 else it }
@@ -1001,18 +1027,24 @@ class MainActivity : AppCompatActivity() {
         audio: Boolean,
         artists: List<String>? = null,
         sizes: List<Long>? = null,
+        durations: List<Long>? = null,
     ) {
         if (index !in uris.indices) return
         // Intent size limit dhaatakunda, chuttupakkala items matrame playlist lo pampistham
         val from = (index - 100).coerceAtLeast(0)
         val to = (index + 200).coerceAtMost(uris.size)
-        val intent = Intent(this, PlayerActivity::class.java)
+        // Songs ki music screen, videos ki video player
+        val target = if (audio) MusicActivity::class.java else PlayerActivity::class.java
+        val intent = Intent(this, target)
             .putStringArrayListExtra(PlayerActivity.EXTRA_URIS, ArrayList(uris.subList(from, to)))
             .putStringArrayListExtra(PlayerActivity.EXTRA_TITLES, ArrayList(titles.subList(from, to)))
             .putExtra(PlayerActivity.EXTRA_INDEX, index - from)
             .putExtra(PlayerActivity.EXTRA_AUDIO, audio)
         if (artists != null) {
             intent.putStringArrayListExtra(PlayerActivity.EXTRA_ARTISTS, ArrayList(artists.subList(from, to)))
+        }
+        if (durations != null) {
+            intent.putExtra(EXTRA_DURATIONS_KEY, durations.subList(from, to).toLongArray())
         }
         if (sizes != null) {
             intent.putExtra(PlayerActivity.EXTRA_SIZES, sizes.subList(from, to).toLongArray())
