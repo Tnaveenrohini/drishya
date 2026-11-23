@@ -6,72 +6,128 @@
     android:background="@color/bg"
     android:orientation="vertical">
 
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/toolbar"
+    <!-- Normal header: Local  ✏  ⋮ -->
+    <LinearLayout
+        android:id="@+id/header"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/bg"
-        app:navigationIconTint="@color/text">
+        android:layout_height="76dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
 
-        <LinearLayout
-            android:id="@+id/brand"
-            android:layout_width="wrap_content"
+        <ImageButton
+            android:id="@+id/btn_back"
+            style="@style/PlayerIcon"
+            android:contentDescription="@string/back"
+            android:src="@drawable/ic_back"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/big_title"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-black"
+            android:maxLines="1"
+            android:text="@string/nav_local"
+            android:textColor="@color/text"
+            android:textSize="32sp" />
 
-            <ImageView
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:contentDescription="@null"
-                android:src="@drawable/ic_logo" />
+        <ImageButton
+            android:id="@+id/btn_search"
+            style="@style/PlayerIcon"
+            android:contentDescription="@string/search"
+            android:src="@drawable/ic_search" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:letterSpacing="0.2"
-                android:text="@string/brand"
-                android:textColor="@color/text"
-                android:textSize="15sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-    </com.google.android.material.appbar.MaterialToolbar>
+        <ImageButton
+            android:id="@+id/btn_select"
+            style="@style/PlayerIcon"
+            android:contentDescription="@string/select_all"
+            android:src="@drawable/ic_edit" />
 
-    <TextView
-        android:id="@+id/big_title"
+        <ImageButton
+            android:id="@+id/btn_menu"
+            style="@style/PlayerIcon"
+            android:contentDescription="@string/more"
+            android:src="@drawable/ic_more" />
+    </LinearLayout>
+
+    <!-- Selection header: Cancel · N selected · Select all -->
+    <LinearLayout
+        android:id="@+id/sel_header"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="20dp"
-        android:layout_marginTop="2dp"
-        android:ellipsize="end"
-        android:fontFamily="sans-serif-black"
-        android:letterSpacing="-0.02"
-        android:maxLines="1"
-        android:text="@string/title_videos"
+        android:layout_height="76dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="20dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/sel_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackground"
+            android:gravity="center"
+            android:text="@string/cancel"
+            android:textColor="@color/text"
+            android:textSize="17sp" />
+
+        <TextView
+            android:id="@+id/sel_count"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:textColor="@color/text"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/sel_all"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackground"
+            android:gravity="center"
+            android:text="@string/select_all"
+            android:textColor="@color/text"
+            android:textSize="17sp" />
+    </LinearLayout>
+
+    <!-- Search box -->
+    <EditText
+        android:id="@+id/search_box"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="6dp"
+        android:background="@drawable/bg_card"
+        android:hint="@string/search_hint"
+        android:importantForAutofill="no"
+        android:inputType="text"
+        android:paddingHorizontal="16dp"
         android:textColor="@color/text"
-        android:textSize="38sp" />
-
-    <TextView
-        android:id="@+id/sub_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="20dp"
-        android:textColor="@color/muted"
-        android:textSize="13sp" />
+        android:textColorHint="@color/muted"
+        android:textSize="15sp"
+        android:visibility="gone" />
 
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tabs"
         style="@style/Flikk.Tabs"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
         android:paddingHorizontal="8dp" />
 
-    <View
+    <TextView
+        android:id="@+id/sub_title"
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/line" />
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="6dp"
+        android:textColor="@color/muted"
+        android:textSize="13sp" />
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -83,8 +139,8 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clipToPadding="false"
-            android:paddingTop="12dp"
-            android:paddingBottom="16dp" />
+            android:paddingTop="6dp"
+            android:paddingBottom="96dp" />
 
         <LinearLayout
             android:id="@+id/empty_box"
@@ -118,65 +174,136 @@
                 android:layout_marginTop="20dp"
                 android:text="@string/allow" />
         </LinearLayout>
-    </FrameLayout>
 
-    <!-- Continue watching mini bar -->
-    <LinearLayout
-        android:id="@+id/mini_bar"
-        android:layout_width="match_parent"
-        android:layout_height="68dp"
-        android:layout_marginHorizontal="14dp"
-        android:layout_marginBottom="14dp"
-        android:background="@drawable/bg_card"
-        android:foreground="?attr/selectableItemBackground"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="10dp"
-        android:visibility="gone">
-
-        <ImageView
-            android:id="@+id/mini_thumb"
-            android:layout_width="80dp"
-            android:layout_height="46dp"
-            android:background="@drawable/bg_thumb"
-            android:contentDescription="@null"
-            android:scaleType="centerCrop" />
-
+        <!-- Continue watching -->
         <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="12dp"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:id="@+id/mini_bar"
+            android:layout_width="match_parent"
+            android:layout_height="68dp"
+            android:layout_gravity="bottom"
+            android:layout_marginHorizontal="14dp"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/bg_card"
+            android:elevation="6dp"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="10dp"
+            android:visibility="gone">
 
-            <TextView
-                android:id="@+id/mini_title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:textColor="@color/text"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+            <ImageView
+                android:id="@+id/mini_thumb"
+                android:layout_width="80dp"
+                android:layout_height="46dp"
+                android:background="@drawable/bg_thumb"
+                android:contentDescription="@null"
+                android:scaleType="centerCrop" />
 
-            <TextView
-                android:id="@+id/mini_sub"
-                android:layout_width="match_parent"
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:maxLines="1"
-                android:textColor="@color/muted"
-                android:textSize="12sp" />
+                android:layout_marginHorizontal="12dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/mini_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="@color/text"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/mini_sub"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:maxLines="1"
+                    android:textColor="@color/muted"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <ImageButton
+                android:id="@+id/mini_play"
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:background="@drawable/bg_accent_circle"
+                android:contentDescription="@string/resume"
+                android:padding="12dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_play"
+                android:tint="#000000" />
         </LinearLayout>
 
-        <ImageButton
-            android:id="@+id/mini_play"
-            android:layout_width="46dp"
-            android:layout_height="46dp"
-            android:background="@drawable/bg_accent_circle"
-            android:contentDescription="@string/resume"
-            android:padding="12dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/ic_play"
-            android:tint="#000000" />
-    </LinearLayout>
+        <!-- Selection actions: Share · Add to · Delete -->
+        <LinearLayout
+            android:id="@+id/select_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="80dp"
+            android:layout_gravity="bottom|center_horizontal"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/bg_select_bar"
+            android:elevation="8dp"
+            android:orientation="horizontal"
+            android:paddingHorizontal="18dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/sel_share"
+                style="@style/SelectAction">
+
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_share" />
+
+                <TextView
+                    style="@style/SelectActionText"
+                    android:text="@string/share" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/sel_add"
+                style="@style/SelectAction">
+
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_playlist_add" />
+
+                <TextView
+                    style="@style/SelectActionText"
+                    android:text="@string/add_to" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/sel_delete"
+                style="@style/SelectAction">
+
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_delete" />
+
+                <TextView
+                    style="@style/SelectActionText"
+                    android:text="@string/delete" />
+            </LinearLayout>
+        </LinearLayout>
+    </FrameLayout>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_nav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#0E0E0E"
+        app:itemIconTint="@color/nav_item"
+        app:itemTextColor="@color/nav_item"
+        app:labelVisibilityMode="labeled"
+        app:menu="@menu/bottom_nav" />
 </LinearLayout>

@@ -173,8 +173,30 @@ object PlayerHolder {
         sleepAt = 0L
         if (sleepAtEnd) {
             sleepAtEnd = false
-            player?.pauseAtEndOfMediaItems = false
+            player?.pauseAtEndOfMediaItems = playMode == MODE_ONCE
         }
+    }
+
+    // ---------------------------------------------------------------- playback mode
+
+    const val MODE_ALL = 0
+    const val MODE_ONE = 1
+    const val MODE_ONCE = 2
+    const val MODE_SHUFFLE = 3
+
+    var playMode = MODE_ALL
+        private set
+
+    fun applyPlayMode(mode: Int) {
+        playMode = mode
+        val p = player ?: return
+        p.shuffleModeEnabled = mode == MODE_SHUFFLE
+        p.repeatMode = when (mode) {
+            MODE_ALL, MODE_SHUFFLE -> Player.REPEAT_MODE_ALL
+            MODE_ONE -> Player.REPEAT_MODE_ONE
+            else -> Player.REPEAT_MODE_OFF
+        }
+        p.pauseAtEndOfMediaItems = mode == MODE_ONCE || sleepAtEnd
     }
 
     fun sleepActive() = sleepAt > 0L || sleepAtEnd

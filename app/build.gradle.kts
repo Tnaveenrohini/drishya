@@ -13,8 +13,8 @@ android {
         applicationId = "com.flikk.player"
         minSdk = 26
         targetSdk = 34
-        versionCode = 4
-        versionName = "1.3"
+        versionCode = 5
+        versionName = "1.4"
     }
 
     // Fixed key: prathi kotha build paata app meedha update ga install avthundi.
@@ -81,6 +81,8 @@ dependencies {
     // Network streams (VLC laga): HLS (.m3u8) + DASH (.mpd)
     implementation("androidx.media3:media3-exoplayer-hls:$media3")
     implementation("androidx.media3:media3-exoplayer-dash:$media3")
+    // Trim (video clip cut chesi save)
+    implementation("androidx.media3:media3-transformer:$media3")
     // AC3 / E-AC3 / DTS / TrueHD audio (MKV movies lo common) — FFmpeg decoder, GPL-3.0
     implementation("org.jellyfin.media3:media3-ffmpeg-decoder:$media3+1")
 

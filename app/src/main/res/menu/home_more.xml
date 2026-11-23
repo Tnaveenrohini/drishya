@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/m_scan" android:title="@string/scan_videos" />
+    <group android:id="@+id/g_sort" android:checkableBehavior="single">
+        <item android:id="@+id/m_sort_date" android:title="@string/sort_date" />
+        <item android:id="@+id/m_sort_name" android:title="@string/sort_name" />
+        <item android:id="@+id/m_sort_length" android:title="@string/sort_length" />
+        <item android:id="@+id/m_sort_size" android:title="@string/sort_size" />
+    </group>
+    <item android:id="@+id/m_open_url" android:title="@string/open_url" />
+</menu>

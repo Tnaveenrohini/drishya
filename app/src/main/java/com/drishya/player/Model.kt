@@ -17,6 +17,7 @@ data class Video(
     val sizeBytes: Long,
     val folder: String,
     val quality: String?,
+    val dateAdded: Long = 0L,
 )
 
 data class Playlist(val key: String, val uris: List<String>) {
@@ -40,6 +41,7 @@ object VideoRepository {
             MediaStore.Video.Media.BUCKET_DISPLAY_NAME,
             MediaStore.Video.Media.WIDTH,
             MediaStore.Video.Media.HEIGHT,
+            MediaStore.Video.Media.DATE_ADDED,
         )
         val out = ArrayList<Video>()
         context.contentResolver.query(
@@ -53,6 +55,7 @@ object VideoRepository {
             val bucketCol = c.getColumnIndexOrThrow(MediaStore.Video.Media.BUCKET_DISPLAY_NAME)
             val wCol = c.getColumnIndex(MediaStore.Video.Media.WIDTH)
             val hCol = c.getColumnIndex(MediaStore.Video.Media.HEIGHT)
+            val dateCol = c.getColumnIndex(MediaStore.Video.Media.DATE_ADDED)
             while (c.moveToNext()) {
                 val id = c.getLong(idCol)
                 val w = if (wCol >= 0) c.getInt(wCol) else 0
@@ -64,6 +67,7 @@ object VideoRepository {
                     sizeBytes = c.getLong(sizeCol),
                     folder = c.getString(bucketCol) ?: "Other",
                     quality = qualityLabel(w, h),
+                    dateAdded = if (dateCol >= 0) c.getLong(dateCol) else 0L,
                 )
             }
         }
@@ -213,6 +217,8 @@ object Library {
         prefs(c).edit().remove(PLAYED + uri).apply()
         c.getSharedPreferences(Prefs.RESUME, Context.MODE_PRIVATE).edit().remove(uri).apply()
     }
+
+    fun lastPlayed(c: Context, uri: String) = prefs(c).getLong(PLAYED + uri, 0L)
 
     fun markPlayed(c: Context, uri: String) {
         prefs(c).edit().putLong(PLAYED + uri, System.currentTimeMillis()).apply()
