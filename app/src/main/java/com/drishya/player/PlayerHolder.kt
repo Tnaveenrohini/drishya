@@ -11,8 +11,12 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.audio.AudioSink
+import androidx.media3.exoplayer.audio.ForwardingAudioSink
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 
 /**
  * Okate player app motham ki. Activity close ayina (background play) idi
@@ -36,10 +40,13 @@ object PlayerHolder {
         player?.let { return it }
         val app = context.applicationContext
         // FFmpeg: phone decode cheyyaleni audio (AC3, DTS…) ki
-        val renderers = DefaultRenderersFactory(app)
+        val renderers = FlikkRenderers(app)
             .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
             .setEnableDecoderFallback(true)
+        // smb:// (PC / NAS) + content / file / http anni okate factory lo
+        val dataSources = DataSource.Factory { FlikkDataSource(app) }
         val p = ExoPlayer.Builder(app, renderers)
+            .setMediaSourceFactory(DefaultMediaSourceFactory(dataSources))
             .setSeekBackIncrementMs(10_000)
             .setSeekForwardIncrementMs(10_000)
             .setAudioAttributes(
@@ -64,8 +71,23 @@ object PlayerHolder {
 
     fun peek(): ExoPlayer? = player
 
+    // ---------------------------------------------------------------- audio delay (lip-sync)
+
+    @Volatile
+    internal var delaySink: DelayAudioSink? = null
+    var audioDelayMs = 0L
+        private set
+
+    /** + = audio late ga vastundi, − = audio mundu vastundi */
+    fun setAudioDelay(ms: Long) {
+        audioDelayMs = ms
+        delaySink?.offsetUs = ms * 1000
+    }
+
     fun release() {
         cancelSleep()
+        delaySink = null
+        audioDelayMs = 0L
         releaseEffects()
         player?.release()
         player = null
@@ -156,4 +178,32 @@ object PlayerHolder {
     }
 
     fun sleepActive() = sleepAt > 0L || sleepAtEnd
+}
+
+/** Audio clock ni konchem mundu/venaka chupinchi audio–video sync marchadam. */
+@OptIn(UnstableApi::class)
+class DelayAudioSink(sink: AudioSink) : ForwardingAudioSink(sink) {
+    @Volatile
+    var offsetUs = 0L
+
+    override fun getCurrentPositionUs(sourceEnded: Boolean): Long {
+        val p = super.getCurrentPositionUs(sourceEnded)
+        return if (p == AudioSink.CURRENT_POSITION_NOT_SET) p else (p + offsetUs).coerceAtLeast(0L)
+    }
+}
+
+@OptIn(UnstableApi::class)
+private class FlikkRenderers(context: Context) : DefaultRenderersFactory(context) {
+    override fun buildAudioSink(
+        context: Context,
+        enableFloatOutput: Boolean,
+        enableAudioTrackPlaybackParams: Boolean,
+    ): AudioSink? {
+        val base = super.buildAudioSink(context, enableFloatOutput, enableAudioTrackPlaybackParams)
+            ?: return null
+        return DelayAudioSink(base).also {
+            it.offsetUs = PlayerHolder.audioDelayMs * 1000
+            PlayerHolder.delaySink = it
+        }
+    }
 }

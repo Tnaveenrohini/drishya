@@ -13,8 +13,8 @@ android {
         applicationId = "com.flikk.player"
         minSdk = 26
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.2"
+        versionCode = 4
+        versionName = "1.3"
     }
 
     // Fixed key: prathi kotha build paata app meedha update ga install avthundi.
@@ -41,6 +41,18 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    packaging {
+        resources {
+            excludes += listOf(
+                "META-INF/versions/9/OSGI-INF/MANIFEST.MF",
+                "META-INF/DEPENDENCIES",
+                "META-INF/LICENSE*",
+                "META-INF/NOTICE*",
+                "META-INF/INDEX.LIST",
+            )
+        }
     }
 
     lint {
@@ -73,4 +85,7 @@ dependencies {
     implementation("org.jellyfin.media3:media3-ffmpeg-decoder:$media3+1")
 
     implementation("com.github.bumptech.glide:glide:4.16.0")
+
+    // PC / NAS shared folders (SMB, Windows "Share" folder) — Wi-Fi lo stream
+    implementation("com.hierynomus:smbj:0.13.0")
 }

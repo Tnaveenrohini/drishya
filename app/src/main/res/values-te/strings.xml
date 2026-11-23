@@ -68,13 +68,6 @@
     <string name="background_on">బ్యాక్‌గ్రౌండ్ ప్లే ఆన్\nయాప్ నుండి బయటకు వెళ్ళినా వినిపిస్తుంది</string>
     <string name="background_off">బ్యాక్‌గ్రౌండ్ ప్లే ఆఫ్</string>
 
-    <string name="theme_colour">థీమ్ రంగు</string>
-    <string name="colour_green">ఆకుపచ్చ</string>
-    <string name="colour_pink">Flikk పింక్</string>
-    <string name="colour_blue">నీలం</string>
-    <string name="colour_saffron">కాషాయం</string>
-    <string name="colour_purple">ఊదా</string>
-    <string name="colour_cyan">సియాన్</string>
 
     <string name="delete_video">ఫోన్ నుండి తొలగించు</string>
     <string name="delete_confirm">“%s” ని మీ ఫోన్ నుండి తొలగించాలా?\nమళ్ళీ తిరిగి రాదు.</string>
@@ -93,4 +86,39 @@
     <string name="boost_normal">సాధారణం</string>
     <string name="boost_mid" formatted="false">+50%</string>
     <string name="boost_high" formatted="false">+100% (గట్టిగా)</string>
+
+    <string name="tab_music">సంగీతం</string>
+    <string name="tab_network">నెట్‌వర్క్</string>
+    <string name="no_music">ఈ ఫోన్‌లో పాటలు ఏవీ దొరకలేదు.</string>
+    <string name="need_audio_permission">మీ పాటలు చూపించడానికి Flikk కి అనుమతి ఇవ్వండి.</string>
+    <string name="count_songs">%d పాటలు</string>
+    <string name="unknown_artist">తెలియని ఆర్టిస్ట్</string>
+
+    <string name="add_server">PC / NAS జోడించు</string>
+    <string name="add_server_sub">Wi-Fi ద్వారా కంప్యూటర్‌లోని వీడియోలు చూడండి</string>
+    <string name="server_host">PC / NAS IP అడ్రస్ (ఉదా. 192.168.1.5)</string>
+    <string name="server_share">షేర్ చేసిన ఫోల్డర్ పేరు (ఉదా. Movies)</string>
+    <string name="server_user">యూజర్‌నేమ్ (ఖాళీ = guest)</string>
+    <string name="server_pass">పాస్‌వర్డ్</string>
+    <string name="server_help">మీ PC లో: ఫోల్డర్ మీద right-click → Properties → Sharing → Share.\nఫోన్, PC ఒకే Wi-Fi లో ఉండాలి.</string>
+    <string name="connect">కనెక్ట్</string>
+    <string name="connecting">కనెక్ట్ అవుతోంది…</string>
+    <string name="connect_failed">కనెక్ట్ కాలేదు\n%s</string>
+    <string name="remove_server">“%s” తీసివేయాలా?</string>
+    <string name="remove">తీసివేయి</string>
+    <string name="folder_empty">ఈ ఫోల్డర్‌లో వీడియోలు లేదా పాటలు లేవు.</string>
+    <string name="items_count">%d అంశాలు</string>
+    <string name="folder">ఫోల్డర్</string>
+
+    <string name="zoom_level">జూమ్ %d%%</string>
+    <string name="mode_360">360° వీడియో మోడ్</string>
+    <string name="on_360">360° ఆన్\nడ్రాగ్ చేయండి లేదా ఫోన్ తిప్పి చుట్టూ చూడండి</string>
+    <string name="off_360">360° ఆఫ్</string>
+    <string name="audio_delay">ఆడియో డిలే</string>
+    <string name="subtitle_delay">సబ్‌టైటిల్ డిలే</string>
+    <string name="audio_delay_hint">+ సౌండ్ తర్వాత · − సౌండ్ ముందు</string>
+    <string name="subtitle_delay_hint">+ సబ్‌టైటిల్స్ తర్వాత · − సబ్‌టైటిల్స్ ముందు</string>
+    <string name="subtitle_delay_need">ముందు .srt / .vtt / .ass ఫైల్ లోడ్ చేయండి (సబ్‌టైటిల్ బటన్)</string>
+    <string name="reset">రీసెట్</string>
+    <string name="done">సరే</string>
 </resources>

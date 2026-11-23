@@ -22,6 +22,7 @@ import android.text.style.RelativeSizeSpan
 import android.util.Rational
 import android.view.GestureDetector
 import android.view.MotionEvent
+import android.view.ScaleGestureDetector
 import android.view.View
 import android.view.WindowManager
 import android.widget.ImageButton
@@ -60,10 +61,22 @@ class PlayerActivity : AppCompatActivity() {
         const val EXTRA_URIS = "uris"
         const val EXTRA_TITLES = "titles"
         const val EXTRA_INDEX = "index"
+        const val EXTRA_AUDIO = "audio"
+        const val EXTRA_ARTISTS = "artists"
         private const val RESUME_MIN_MS = 5_000L
     }
 
     private lateinit var playerView: PlayerView
+    private lateinit var playerView360: PlayerView
+    private var is360 = false
+    private val activeView get() = if (is360) playerView360 else playerView
+    private var zoom = 1f
+    private var zooming = false
+
+    // External subtitle (delay/sync kosam original file gurtupettukuntam)
+    private var subOriginal: Uri? = null
+    private var subName = ""
+    private var subDelayMs = 0L
     private lateinit var hud: TextView
     private lateinit var topBar: View
     private lateinit var titleView: TextView
@@ -131,6 +144,7 @@ class PlayerActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_player)
         playerView = findViewById(R.id.player_view)
+        playerView360 = findViewById(R.id.player_view_360)
         hud = findViewById(R.id.hud)
         topBar = findViewById(R.id.top_bar)
         titleView = findViewById(R.id.player_title)
@@ -171,11 +185,11 @@ class PlayerActivity : AppCompatActivity() {
         unlockPill.setOnClickListener { showUnlock() }
         onBackPressedDispatcher.addCallback(this, lockBack)
 
-        playerView.setControllerVisibilityListener(
-            PlayerView.ControllerVisibilityListener { visibility ->
-                if (!isInPictureInPictureMode && !locked) topBar.visibility = visibility
-            }
-        )
+        val visListener = PlayerView.ControllerVisibilityListener { visibility ->
+            if (!isInPictureInPictureMode && !locked) topBar.visibility = visibility
+        }
+        playerView.setControllerVisibilityListener(visListener)
+        playerView360.setControllerVisibilityListener(visListener)
         setupGestures()
         handleIntent(intent)
         updateBgIcon()
@@ -210,10 +224,12 @@ class PlayerActivity : AppCompatActivity() {
         handler.removeCallbacks(saveTick)
         val p = player
         if (p != null) {
+            val keep = (bgPlay || playingAudio()) && p.isPlaying
             p.removeListener(listener)
-            if (!(bgPlay && p.isPlaying)) p.pause()
+            if (!keep) p.pause()
         }
         playerView.player = null
+        playerView360.player = null
         player = null
     }
 
@@ -249,13 +265,20 @@ class PlayerActivity : AppCompatActivity() {
         when {
             !uris.isNullOrEmpty() -> {
                 val titles = i.getStringArrayListExtra(EXTRA_TITLES)
+                val artists = i.getStringArrayListExtra(EXTRA_ARTISTS)
+                val audio = i.getBooleanExtra(EXTRA_AUDIO, false)
                 pendingItems = uris.mapIndexed { idx, u ->
-                    buildItem(Uri.parse(u), titles?.getOrNull(idx) ?: "Video")
+                    buildItem(
+                        Uri.parse(u), titles?.getOrNull(idx) ?: "Video",
+                        audio = audio || isAudioName(u), artist = artists?.getOrNull(idx),
+                    )
                 }
                 pendingIndex = i.getIntExtra(EXTRA_INDEX, 0).coerceIn(0, uris.size - 1)
             }
             data != null -> {
-                pendingItems = listOf(buildItem(data, displayName(data)))
+                val name = displayName(data)
+                val audio = isAudioName(name) || i.type?.startsWith("audio/") == true
+                pendingItems = listOf(buildItem(data, name, audio = audio))
                 pendingIndex = 0
             }
             // Notification nunchi vachhamu: already playing video ne chupistham
@@ -267,11 +290,14 @@ class PlayerActivity : AppCompatActivity() {
         i.data = null
     }
 
-    private fun buildItem(uri: Uri, title: String): MediaItem {
+    private fun buildItem(uri: Uri, title: String, audio: Boolean = false, artist: String? = null): MediaItem {
+        val meta = MediaMetadata.Builder().setTitle(title)
+        if (audio) meta.setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
+        if (!artist.isNullOrBlank()) meta.setArtist(artist)
         val b = MediaItem.Builder()
             .setUri(uri)
             .setMediaId(uri.toString())
-            .setMediaMetadata(MediaMetadata.Builder().setTitle(title).build())
+            .setMediaMetadata(meta.build())
         // Network streams: link lo .m3u8 / .mpd unte HLS / DASH ani cheppali
         val s = uri.toString().lowercase()
         if (uri.scheme == "http" || uri.scheme == "https") {
@@ -300,10 +326,11 @@ class PlayerActivity : AppCompatActivity() {
         if (player != null) return
         val p = PlayerHolder.get(this)
         player = p
-        playerView.player = p
+        activeView.player = p
         playerView.resizeMode = resizeModes[resizeIdx]
         p.addListener(listener)
         applyPending()
+        updateAudioUi()
         p.currentMediaItem?.let { titleView.text = it.mediaMetadata.title }
         handler.removeCallbacks(saveTick)
         handler.post(saveTick)
@@ -319,10 +346,13 @@ class PlayerActivity : AppCompatActivity() {
         if (saved > RESUME_MIN_MS) showHud(getString(R.string.resumed_from, formatTime(saved)), 1500)
         lastMediaId = first.mediaId
         titleView.text = first.mediaMetadata.title
+        subOriginal = null
+        subDelayMs = 0L
         p.setMediaItems(items, pendingIndex, pos)
         p.prepare()
         p.play()
         Library.markPlayed(this, first.mediaId)
+        updateAudioUi()
     }
 
     private fun savePosition() {
@@ -339,6 +369,11 @@ class PlayerActivity : AppCompatActivity() {
     private val listener = object : Player.Listener {
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             titleView.text = mediaItem?.mediaMetadata?.title
+            if (reason != Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED) {
+                subOriginal = null
+                subDelayMs = 0L
+            }
+            updateAudioUi()
             if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
                 lastMediaId?.let { resumePrefs.edit().remove(it).apply() }
             }
@@ -386,8 +421,8 @@ class PlayerActivity : AppCompatActivity() {
     private fun lock() {
         locked = true
         lockBack.isEnabled = true
-        playerView.hideController()
-        playerView.useController = false
+        activeView.hideController()
+        activeView.useController = false
         topBar.visibility = View.GONE
         showUnlock()
     }
@@ -397,8 +432,8 @@ class PlayerActivity : AppCompatActivity() {
         lockBack.isEnabled = false
         handler.removeCallbacks(hideUnlock)
         unlockPill.visibility = View.GONE
-        playerView.useController = true
-        playerView.showController()
+        activeView.useController = true
+        activeView.showController()
     }
 
     private fun showUnlock() {
@@ -508,6 +543,9 @@ class PlayerActivity : AppCompatActivity() {
             setOnMenuItemClickListener {
                 when (it.itemId) {
                     R.id.m_eq -> equalizerDialog()
+                    R.id.m_audio_delay -> audioDelayDialog()
+                    R.id.m_sub_delay -> subtitleDelayDialog()
+                    R.id.m_360 -> toggle360()
                     R.id.m_boost -> boostDialog()
                     R.id.m_resize -> cycleResize()
                     R.id.m_rotate -> rotate()
@@ -522,12 +560,19 @@ class PlayerActivity : AppCompatActivity() {
     // ---------------------------------------------------------------- other features
 
     private fun attachSubtitle(uri: Uri) {
-        val p = player ?: return
         try {
             contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
         } catch (_: Exception) {
         }
-        val name = displayName(uri)
+        subOriginal = uri
+        subName = displayName(uri)
+        subDelayMs = 0L
+        applySubtitle(uri, subName)
+        showHud(getString(R.string.subtitles_loaded, subName), 1500)
+    }
+
+    private fun applySubtitle(uri: Uri, name: String) {
+        val p = player ?: return
         val lower = name.lowercase()
         val mime = when {
             lower.endsWith(".vtt") -> MimeTypes.TEXT_VTT
@@ -551,10 +596,159 @@ class PlayerActivity : AppCompatActivity() {
             .build()
         p.setMediaItems(list, idx, pos)
         p.prepare()
-        showHud(getString(R.string.subtitles_loaded, name), 1500)
+    }
+
+    // ---------------------------------------------------------------- audio / subtitle sync (VLC style)
+
+    private fun delayDialog(
+        title: Int,
+        hint: Int,
+        stepMs: Long,
+        current: () -> Long,
+        onChange: (Long) -> Unit,
+    ) {
+        val pad = (20 * resources.displayMetrics.density).toInt()
+        val value = TextView(this).apply {
+            textSize = 30f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            gravity = android.view.Gravity.CENTER
+            setTextColor(0xFFFFFFFF.toInt())
+        }
+        fun show() {
+            val v = current()
+            value.text = String.format(java.util.Locale.US, "%+.2f s", v / 1000.0)
+        }
+        fun btn(label: String, delta: Long) = com.google.android.material.button.MaterialButton(this).apply {
+            text = label
+            setOnClickListener {
+                onChange(if (delta == 0L) 0L else current() + delta)
+                show()
+            }
+        }
+        val row = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.HORIZONTAL
+            gravity = android.view.Gravity.CENTER
+            val lp = android.widget.LinearLayout.LayoutParams(0, android.view.ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+                .apply { marginStart = pad / 4; marginEnd = pad / 4 }
+            addView(btn("−", -stepMs), lp)
+            addView(btn(getString(R.string.reset), 0L), lp)
+            addView(btn("+", stepMs), lp)
+        }
+        val hintView = TextView(this).apply {
+            text = getString(hint)
+            gravity = android.view.Gravity.CENTER
+            setTextColor(0xFFA3A3A3.toInt())
+            textSize = 13f
+        }
+        val box = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding(pad, pad / 2, pad, 0)
+            addView(value)
+            addView(row)
+            addView(hintView)
+        }
+        show()
+        MaterialAlertDialogBuilder(this)
+            .setTitle(title)
+            .setView(box)
+            .setPositiveButton(R.string.done, null)
+            .show()
+    }
+
+    private fun audioDelayDialog() {
+        delayDialog(R.string.audio_delay, R.string.audio_delay_hint, 50L,
+            current = { PlayerHolder.audioDelayMs },
+            onChange = { PlayerHolder.setAudioDelay(it.coerceIn(-5_000L, 5_000L)) })
+    }
+
+    private fun subtitleDelayDialog() {
+        if (subOriginal == null) {
+            showHud(getString(R.string.subtitle_delay_need), 2000)
+            return
+        }
+        delayDialog(R.string.subtitle_delay, R.string.subtitle_delay_hint, 250L,
+            current = { subDelayMs },
+            onChange = { ms ->
+                subDelayMs = ms.coerceIn(-60_000L, 60_000L)
+                shiftSubtitles()
+            })
+    }
+
+    /** Subtitle file lo timings anni shift chesi kotha file ga load chestham. */
+    private fun shiftSubtitles() {
+        val src = subOriginal ?: return
+        val ms = subDelayMs
+        if (ms == 0L) {
+            applySubtitle(src, subName)
+            return
+        }
+        try {
+            val text = contentResolver.openInputStream(src)?.use { it.readBytes().toString(Charsets.UTF_8) } ?: return
+            val ass = subName.lowercase().let { it.endsWith(".ass") || it.endsWith(".ssa") }
+            val shifted = if (ass) {
+                Regex("(\\d+):(\\d{2}):(\\d{2})\\.(\\d{2})").replace(text) { m ->
+                    val (h, mi, se, cs) = m.destructured
+                    val t = ((h.toLong() * 3600 + mi.toLong() * 60 + se.toLong()) * 1000 + cs.toLong() * 10 + ms)
+                        .coerceAtLeast(0L)
+                    String.format(java.util.Locale.US, "%d:%02d:%02d.%02d",
+                        t / 3_600_000, t / 60_000 % 60, t / 1000 % 60, t % 1000 / 10)
+                }
+            } else {
+                Regex("(\\d{1,2}):(\\d{2}):(\\d{2})([,.])(\\d{3})").replace(text) { m ->
+                    val (h, mi, se, sep, mil) = m.destructured
+                    val t = ((h.toLong() * 3600 + mi.toLong() * 60 + se.toLong()) * 1000 + mil.toLong() + ms)
+                        .coerceAtLeast(0L)
+                    String.format(java.util.Locale.US, "%02d:%02d:%02d%s%03d",
+                        t / 3_600_000, t / 60_000 % 60, t / 1000 % 60, sep, t % 1000)
+                }
+            }
+            val ext = subName.substringAfterLast('.', "srt")
+            cacheDir.listFiles { f -> f.name.startsWith("sub_shift_") }?.forEach { it.delete() }
+            val out = java.io.File(cacheDir, "sub_shift_${System.currentTimeMillis()}.$ext")
+            out.writeText(shifted, Charsets.UTF_8)
+            applySubtitle(Uri.fromFile(out), subName)
+        } catch (_: Exception) {
+        }
+    }
+
+    // ---------------------------------------------------------------- 360° + zoom + audio mode
+
+    private fun toggle360() {
+        val p = player ?: return
+        val from = activeView
+        is360 = !is360
+        val to = activeView
+        PlayerView.switchTargetView(p, from, to)
+        from.visibility = View.GONE
+        to.visibility = View.VISIBLE
+        resetZoom()
+        showHud(getString(if (is360) R.string.on_360 else R.string.off_360), 1800)
+    }
+
+    private fun applyZoom() {
+        playerView.videoSurfaceView?.apply {
+            scaleX = zoom
+            scaleY = zoom
+        }
+    }
+
+    private fun resetZoom() {
+        zoom = 1f
+        applyZoom()
+    }
+
+    private fun playingAudio() =
+        player?.currentMediaItem?.mediaMetadata?.mediaType == MediaMetadata.MEDIA_TYPE_MUSIC
+
+    /** Music aithe controls eppudu kanipistayi, video aithe 5s tarvata dachestham. */
+    private fun updateAudioUi() {
+        val audio = playingAudio()
+        activeView.controllerShowTimeoutMs = if (audio) 0 else 5000
+        if (audio) activeView.showController()
     }
 
     private fun cycleResize() {
+        resetZoom()
         resizeIdx = (resizeIdx + 1) % resizeModes.size
         playerView.resizeMode = resizeModes[resizeIdx]
         showHud(getString(resizeNames[resizeIdx]))
@@ -601,7 +795,7 @@ class PlayerActivity : AppCompatActivity() {
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
         // Background play on unte audio continue avthundi; ledante PiP window
-        if (!bgPlay && !locked && player?.isPlaying == true) enterPip()
+        if (!bgPlay && !playingAudio() && !locked && player?.isPlaying == true) enterPip()
     }
 
     override fun onPictureInPictureModeChanged(
@@ -609,7 +803,7 @@ class PlayerActivity : AppCompatActivity() {
         newConfig: Configuration,
     ) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
-        playerView.useController = !isInPictureInPictureMode && !locked
+        activeView.useController = !isInPictureInPictureMode && !locked
         if (isInPictureInPictureMode) {
             topBar.visibility = View.GONE
             hud.visibility = View.GONE
@@ -622,7 +816,7 @@ class PlayerActivity : AppCompatActivity() {
 
     // ---------------------------------------------------------------- gestures
 
-    private enum class Mode { NONE, BRIGHTNESS, VOLUME, SEEK }
+    private enum class Mode { NONE, BRIGHTNESS, VOLUME, SEEK, ZOOM }
 
     private var mode = Mode.NONE
     private var startBright = 0.5f
@@ -663,8 +857,8 @@ class PlayerActivity : AppCompatActivity() {
             }
 
             override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
-                if (playerView.isControllerFullyVisible) playerView.hideController()
-                else playerView.showController()
+                if (activeView.isControllerFullyVisible) activeView.hideController()
+                else activeView.showController()
                 return true
             }
 
@@ -699,6 +893,7 @@ class PlayerActivity : AppCompatActivity() {
                 val dx = e2.x - s.x
                 val dy = e2.y - s.y
 
+                if (mode == Mode.ZOOM || e2.pointerCount > 1) return false
                 if (mode == Mode.NONE) {
                     if (s.y < h * 0.08f || s.y > h * 0.92f) return false
                     mode = when {
@@ -738,8 +933,24 @@ class PlayerActivity : AppCompatActivity() {
                         span.setSpan(RelativeSizeSpan(2f), 0, big.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
                         showHud(span)
                     }
-                    Mode.NONE -> Unit
+                    Mode.NONE, Mode.ZOOM -> Unit
                 }
+                return true
+            }
+        })
+
+        // Two-finger pinch: zoom in / zoom out (50% – 400%)
+        val scaleDetector = ScaleGestureDetector(this, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+            override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
+                mode = Mode.ZOOM
+                return true
+            }
+
+            override fun onScale(detector: ScaleGestureDetector): Boolean {
+                zoom = (zoom * detector.scaleFactor).coerceIn(0.5f, 4f)
+                if (abs(zoom - 1f) < 0.04f) zoom = 1f
+                applyZoom()
+                showHud(getString(R.string.zoom_level, (zoom * 100).roundToInt()))
                 return true
             }
         })
@@ -749,10 +960,20 @@ class PlayerActivity : AppCompatActivity() {
                 if (ev.actionMasked == MotionEvent.ACTION_UP) showUnlock()
                 return@setOnTouchListener true
             }
-            detector.onTouchEvent(ev)
+            scaleDetector.onTouchEvent(ev)
+            if (!zooming && (ev.pointerCount > 1 || scaleDetector.isInProgress)) {
+                zooming = true
+                mode = Mode.ZOOM
+                val cancel = MotionEvent.obtain(ev)
+                cancel.action = MotionEvent.ACTION_CANCEL
+                detector.onTouchEvent(cancel)
+                cancel.recycle()
+            }
+            if (!zooming) detector.onTouchEvent(ev)
             if (ev.actionMasked == MotionEvent.ACTION_UP || ev.actionMasked == MotionEvent.ACTION_CANCEL) {
                 if (mode == Mode.SEEK) player?.seekTo(seekTarget)
                 mode = Mode.NONE
+                zooming = false
             }
             true
         }

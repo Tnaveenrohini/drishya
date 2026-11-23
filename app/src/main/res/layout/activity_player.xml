@@ -15,6 +15,22 @@
         app:show_buffering="when_playing"
         app:show_shuffle_button="false"
         app:show_subtitle_button="true"
+        app:surface_type="texture_view"
+        app:unplayed_color="#33FFFFFF" />
+
+    <!-- 360° videos: drag / phone tippi chudochu -->
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/player_view_360"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        app:buffered_color="#66FFFFFF"
+        app:played_color="@color/accent"
+        app:scrubber_color="@color/accent"
+        app:show_buffering="when_playing"
+        app:show_shuffle_button="false"
+        app:show_subtitle_button="true"
+        app:surface_type="spherical_gl_surface_view"
         app:unplayed_color="#33FFFFFF" />
 
     <LinearLayout

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Cinema Black -->
+    <!-- Black & White -->
     <color name="bg">#000000</color>
     <color name="surface">#141414</color>
     <color name="line">#1F1F1F</color>
     <color name="text">#FFFFFF</color>
     <color name="muted">#A3A3A3</color>
-    <color name="accent">#3CCB6A</color>
+    <color name="accent">#FFFFFF</color>
     <color name="brand_pink">#FF3D8B</color>
 </resources>

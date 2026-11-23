@@ -21,6 +21,7 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -55,6 +56,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var miniSub: TextView
 
     private var allVideos: List<Video> = emptyList()
+    private var allTracks: List<Track> = emptyList()
+    private var openServer: SmbServer? = null
+    private var smbPath = ""
+    private var smbEntries: List<SmbEntry>? = null
+    private var smbToken = 0
+    private val netIo = Executors.newSingleThreadExecutor()
     private var loaded = false
     private var tab = 0
     private var openFolder: String? = null
@@ -114,7 +121,10 @@ class MainActivity : AppCompatActivity() {
         allowBtn.setOnClickListener { requestPermission() }
         onBackPressedDispatcher.addCallback(this, backCallback)
 
-        listOf(R.string.tab_all, R.string.tab_folders, R.string.tab_playlists, R.string.tab_recent)
+        listOf(
+            R.string.tab_all, R.string.tab_folders, R.string.tab_playlists,
+            R.string.tab_recent, R.string.tab_music, R.string.tab_network,
+        )
             .forEach { tabs.addTab(tabs.newTab().setText(it)) }
         tabs.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(t: TabLayout.Tab) {
@@ -147,13 +157,21 @@ class MainActivity : AppCompatActivity() {
         else -> granted(Manifest.permission.READ_EXTERNAL_STORAGE)
     }
 
+    private fun hasAudioPermission(): Boolean =
+        if (Build.VERSION.SDK_INT >= 33) granted(Manifest.permission.READ_MEDIA_AUDIO)
+        else granted(Manifest.permission.READ_EXTERNAL_STORAGE)
+
     private fun requestPermission() {
         val perms = when {
             Build.VERSION.SDK_INT >= 34 -> arrayOf(
                 Manifest.permission.READ_MEDIA_VIDEO,
-                Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
+                Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED,
+                Manifest.permission.READ_MEDIA_AUDIO,
             )
-            Build.VERSION.SDK_INT >= 33 -> arrayOf(Manifest.permission.READ_MEDIA_VIDEO)
+            Build.VERSION.SDK_INT >= 33 -> arrayOf(
+                Manifest.permission.READ_MEDIA_VIDEO,
+                Manifest.permission.READ_MEDIA_AUDIO,
+            )
             else -> arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
         }
         permLauncher.launch(perms)
@@ -161,15 +179,23 @@ class MainActivity : AppCompatActivity() {
 
     private fun refresh() {
         if (!hasPermission()) {
+            if (openServer != null || tab == 5) {
+                render()
+                return
+            }
             showEmpty(getString(R.string.need_permission), showButton = true)
             miniBar.visibility = View.GONE
             return
         }
         io.execute {
             val list = try { VideoRepository.load(this) } catch (e: Exception) { emptyList() }
+            val tracks = if (hasAudioPermission()) {
+                try { AudioRepository.load(this) } catch (e: Exception) { emptyList() }
+            } else emptyList()
             runOnUiThread {
                 if (isDestroyed) return@runOnUiThread
                 allVideos = list
+                allTracks = tracks
                 loaded = true
                 render()
             }
@@ -179,6 +205,16 @@ class MainActivity : AppCompatActivity() {
     // ------------------------------------------------------------ rendering
 
     private fun goBack() {
+        val server = openServer
+        if (server != null) {
+            if (smbPath.isNotEmpty()) openSmb(server, smbPath.substringBeforeLast('/', ""))
+            else {
+                openServer = null
+                smbEntries = null
+                render()
+            }
+            return
+        }
         openFolder = null
         openPlaylist = null
         render()
@@ -200,18 +236,31 @@ class MainActivity : AppCompatActivity() {
         if (key == Library.FAVOURITES) getString(R.string.favourites) else key
 
     private fun render() {
-        val inside = openFolder != null || openPlaylist != null
+        val server = openServer
+        val inside = openFolder != null || openPlaylist != null || server != null
         backCallback.isEnabled = inside
         toolbar.navigationIcon =
             if (inside) ContextCompat.getDrawable(this, R.drawable.ic_back) else null
         tabs.visibility = if (inside) View.GONE else View.VISIBLE
         bigTitle.text = when {
+            server != null -> if (smbPath.isEmpty()) server.share else smbPath.substringAfterLast('/')
             openFolder != null -> openFolder
             openPlaylist != null -> playlistLabel(openPlaylist!!)
+            tab == 4 -> getString(R.string.tab_music)
+            tab == 5 -> getString(R.string.tab_network)
             else -> getString(R.string.title_videos)
+        }
+        if (server != null || (tab == 5 && !inside)) {
+            miniBar.visibility = View.GONE
+            renderNetwork()
+            return
         }
         if (!loaded) return
         updateMiniBar(inside)
+        if (tab == 4 && !inside) {
+            renderMusic(query.trim().lowercase())
+            return
+        }
 
         if (allVideos.isEmpty()) {
             subTitle.text = ""
@@ -293,6 +342,170 @@ class MainActivity : AppCompatActivity() {
             askPlaylistName { name -> if (Library.create(this, name)) render() }
         })
         recycler.adapter = RowAdapter(rows)
+    }
+
+    // ------------------------------------------------------------ music
+
+    private fun renderMusic(q: String) {
+        if (!hasAudioPermission()) {
+            subTitle.text = ""
+            showEmpty(getString(R.string.need_audio_permission), showButton = true)
+            return
+        }
+        val list = if (q.isEmpty()) allTracks
+        else allTracks.filter { it.title.lowercase().contains(q) || it.artist.lowercase().contains(q) }
+        if (list.isEmpty()) {
+            subTitle.text = ""
+            showEmpty(getString(R.string.no_music), showButton = false)
+            return
+        }
+        hideEmpty()
+        subTitle.text = getString(R.string.count_songs, list.size)
+        recycler.adapter = RowAdapter(list.mapIndexed { i, t ->
+            val artist = t.artist.ifBlank { getString(R.string.unknown_artist) }
+            Row(t.title, "$artist · ${formatTime(t.durationMs)}", R.drawable.ic_music, onClick = {
+                launchPlayer(
+                    list.map { it.uri.toString() }, list.map { it.title }, i,
+                    audio = true, artists = list.map { it.artist },
+                )
+            })
+        })
+    }
+
+    // ------------------------------------------------------------ network (PC / NAS)
+
+    private fun renderNetwork() {
+        val server = openServer
+        if (server == null) {
+            hideEmpty()
+            subTitle.text = getString(R.string.add_server_sub)
+            val rows = SmbStore.list(this).map { s ->
+                Row(
+                    s.label, s.user.ifBlank { "guest" }, R.drawable.ic_computer,
+                    onClick = { openSmb(s, "") },
+                    onLongClick = { confirmRemoveServer(s) },
+                )
+            } + Row(getString(R.string.add_server), "", R.drawable.ic_add, onClick = { addServerDialog() })
+            recycler.adapter = RowAdapter(rows)
+            return
+        }
+        subTitle.text = server.label
+        val entries = smbEntries
+        if (entries == null) {
+            showEmpty(getString(R.string.connecting), showButton = false)
+            return
+        }
+        if (entries.isEmpty()) {
+            showEmpty(getString(R.string.folder_empty), showButton = false)
+            return
+        }
+        hideEmpty()
+        subTitle.text = "${server.label} · ${getString(R.string.items_count, entries.size)}"
+        val media = entries.filter { !it.isDir }
+        recycler.adapter = RowAdapter(entries.map { e ->
+            if (e.isDir) {
+                Row(e.name, getString(R.string.folder), R.drawable.ic_folder, onClick = {
+                    openSmb(server, if (smbPath.isEmpty()) e.name else "$smbPath/${e.name}")
+                })
+            } else {
+                Row(
+                    e.name, formatSize(e.size),
+                    if (isAudioName(e.name)) R.drawable.ic_music else R.drawable.ic_play,
+                    onClick = {
+                        launchPlayer(
+                            media.map { Smb.uriFor(server, smbPath, it.name).toString() },
+                            media.map { it.name },
+                            media.indexOf(e),
+                            audio = isAudioName(e.name),
+                        )
+                    },
+                )
+            }
+        })
+    }
+
+    private fun openSmb(server: SmbServer, path: String, saveOnSuccess: Boolean = false) {
+        openServer = server
+        smbPath = path
+        smbEntries = null
+        render()
+        val token = ++smbToken
+        netIo.execute {
+            try {
+                val list = Smb.list(server, path)
+                runOnUiThread {
+                    if (token != smbToken || isDestroyed) return@runOnUiThread
+                    if (saveOnSuccess) SmbStore.save(this, server)
+                    smbEntries = list
+                    render()
+                }
+            } catch (e: Exception) {
+                Smb.forget(server)
+                runOnUiThread {
+                    if (token != smbToken || isDestroyed) return@runOnUiThread
+                    toast(getString(R.string.connect_failed, e.message ?: e.javaClass.simpleName))
+                    openServer = null
+                    smbPath = ""
+                    smbEntries = null
+                    render()
+                }
+            }
+        }
+    }
+
+    private fun addServerDialog() {
+        val pad = (20 * resources.displayMetrics.density).toInt()
+        fun field(hintRes: Int, password: Boolean = false) = EditText(this).apply {
+            hint = getString(hintRes)
+            isSingleLine = true
+            inputType = if (password) InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            else InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+        }
+        val help = TextView(this).apply {
+            text = getString(R.string.server_help)
+            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.muted))
+            textSize = 13f
+            setPadding(0, 0, 0, pad / 2)
+        }
+        val host = field(R.string.server_host)
+        val share = field(R.string.server_share)
+        val user = field(R.string.server_user)
+        val pass = field(R.string.server_pass, password = true)
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(pad, pad / 2, pad, 0)
+            listOf(help, host, share, user, pass).forEach { addView(it) }
+        }
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.add_server)
+            .setView(ScrollView(this).apply { addView(box) })
+            .setPositiveButton(R.string.connect) { _, _ ->
+                // "\\192.168.1.5\\Movies" / "smb://192.168.1.5/Movies" kuda ardham chesukuntam
+                var h = host.text.toString().trim().removePrefix("smb://").trim('\\', '/')
+                var sh = share.text.toString().trim().trim('\\', '/')
+                val parts = h.split('/', '\\').filter { it.isNotEmpty() }
+                if (parts.size > 1) {
+                    h = parts[0]
+                    if (sh.isEmpty()) sh = parts[1]
+                }
+                if (h.isEmpty() || sh.isEmpty()) return@setPositiveButton
+                val server = SmbServer(h, sh, user.text.toString().trim(), pass.text.toString())
+                openSmb(server, "", saveOnSuccess = true)
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun confirmRemoveServer(s: SmbServer) {
+        MaterialAlertDialogBuilder(this)
+            .setMessage(getString(R.string.remove_server, s.label))
+            .setPositiveButton(R.string.remove) { _, _ ->
+                SmbStore.delete(this, s.id)
+                Smb.forget(s)
+                render()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     private fun updateMiniBar(inside: Boolean) {
@@ -403,25 +616,7 @@ class MainActivity : AppCompatActivity() {
         render()
     }
 
-    // ------------------------------------------------------------ theme + network stream
-
-    private fun chooseTheme() {
-        val opts = ThemeColors.options
-        val labels = opts.map { o ->
-            SpannableString("●   " + getString(o.label)).apply {
-                setSpan(ForegroundColorSpan(o.color), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-            }
-        }.toTypedArray<CharSequence>()
-        val checked = opts.indexOf(ThemeColors.current(this))
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.theme_colour)
-            .setSingleChoiceItems(labels, checked) { d, which ->
-                d.dismiss()
-                ThemeColors.set(this, opts[which].key)
-                recreate()
-            }
-            .show()
-    }
+    // ------------------------------------------------------------ network stream (URL)
 
     private fun openUrlDialog() {
         val input = EditText(this).apply {
@@ -524,15 +719,28 @@ class MainActivity : AppCompatActivity() {
 
     // ------------------------------------------------------------ player
 
-    private fun openPlayer(list: List<Video>, index: Int) {
-        // Intent size limit dhaatakunda, chuttupakkala videos matrame playlist lo pampistham
+    private fun openPlayer(list: List<Video>, index: Int) =
+        launchPlayer(list.map { it.uri.toString() }, list.map { it.name }, index, audio = false)
+
+    private fun launchPlayer(
+        uris: List<String>,
+        titles: List<String>,
+        index: Int,
+        audio: Boolean,
+        artists: List<String>? = null,
+    ) {
+        if (index !in uris.indices) return
+        // Intent size limit dhaatakunda, chuttupakkala items matrame playlist lo pampistham
         val from = (index - 100).coerceAtLeast(0)
-        val to = (index + 200).coerceAtMost(list.size)
-        val window = list.subList(from, to)
+        val to = (index + 200).coerceAtMost(uris.size)
         val intent = Intent(this, PlayerActivity::class.java)
-            .putStringArrayListExtra(PlayerActivity.EXTRA_URIS, ArrayList(window.map { it.uri.toString() }))
-            .putStringArrayListExtra(PlayerActivity.EXTRA_TITLES, ArrayList(window.map { it.name }))
+            .putStringArrayListExtra(PlayerActivity.EXTRA_URIS, ArrayList(uris.subList(from, to)))
+            .putStringArrayListExtra(PlayerActivity.EXTRA_TITLES, ArrayList(titles.subList(from, to)))
             .putExtra(PlayerActivity.EXTRA_INDEX, index - from)
+            .putExtra(PlayerActivity.EXTRA_AUDIO, audio)
+        if (artists != null) {
+            intent.putStringArrayListExtra(PlayerActivity.EXTRA_ARTISTS, ArrayList(artists.subList(from, to)))
+        }
         startActivity(intent)
     }
 
@@ -557,7 +765,6 @@ class MainActivity : AppCompatActivity() {
         when (item.itemId) {
             R.id.action_refresh -> refresh()
             R.id.action_language -> chooseLanguage()
-            R.id.action_theme -> chooseTheme()
             R.id.action_open_url -> openUrlDialog()
             else -> return super.onOptionsItemSelected(item)
         }
@@ -567,5 +774,6 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         io.shutdown()
+        netIo.shutdown()
     }
 }

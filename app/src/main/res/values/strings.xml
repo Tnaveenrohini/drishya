@@ -73,13 +73,6 @@
     <string name="background_on">Background play ON\nKeeps playing when you leave the app</string>
     <string name="background_off">Background play OFF</string>
 
-    <string name="theme_colour">Theme colour</string>
-    <string name="colour_green">Green</string>
-    <string name="colour_pink">Flikk Pink</string>
-    <string name="colour_blue">Blue</string>
-    <string name="colour_saffron">Saffron</string>
-    <string name="colour_purple">Purple</string>
-    <string name="colour_cyan">Cyan</string>
 
     <string name="delete_video">Delete from phone</string>
     <string name="delete_confirm">Delete “%s” from your phone?\nThis can\'t be undone.</string>
@@ -98,4 +91,39 @@
     <string name="boost_normal">Normal</string>
     <string name="boost_mid" formatted="false">+50%</string>
     <string name="boost_high" formatted="false">+100% (loud)</string>
+
+    <string name="tab_music">Music</string>
+    <string name="tab_network">Network</string>
+    <string name="no_music">No music found on this phone.</string>
+    <string name="need_audio_permission">Allow access so Flikk can show your music.</string>
+    <string name="count_songs">%d songs</string>
+    <string name="unknown_artist">Unknown artist</string>
+
+    <string name="add_server">Add PC / NAS</string>
+    <string name="add_server_sub">Watch videos from your computer over Wi-Fi</string>
+    <string name="server_host">PC / NAS IP address (e.g. 192.168.1.5)</string>
+    <string name="server_share">Shared folder name (e.g. Movies)</string>
+    <string name="server_user">Username (empty = guest)</string>
+    <string name="server_pass">Password</string>
+    <string name="server_help">On your PC: right-click a folder → Properties → Sharing → Share.\nPhone and PC must be on the same Wi-Fi.</string>
+    <string name="connect">Connect</string>
+    <string name="connecting">Connecting…</string>
+    <string name="connect_failed">Couldn\'t connect\n%s</string>
+    <string name="remove_server">Remove “%s”?</string>
+    <string name="remove">Remove</string>
+    <string name="folder_empty">No videos or music in this folder.</string>
+    <string name="items_count">%d items</string>
+    <string name="folder">Folder</string>
+
+    <string name="zoom_level">Zoom %d%%</string>
+    <string name="mode_360">360° video mode</string>
+    <string name="on_360">360° ON\nDrag or move your phone to look around</string>
+    <string name="off_360">360° OFF</string>
+    <string name="audio_delay">Audio delay</string>
+    <string name="subtitle_delay">Subtitle delay</string>
+    <string name="audio_delay_hint">+ sound comes later · − sound comes earlier</string>
+    <string name="subtitle_delay_hint">+ subtitles later · − subtitles earlier</string>
+    <string name="subtitle_delay_need">Load an .srt / .vtt / .ass file first (subtitle button)</string>
+    <string name="reset">Reset</string>
+    <string name="done">Done</string>
 </resources>

@@ -83,6 +83,50 @@ object VideoRepository {
     }
 }
 
+data class Track(
+    val uri: Uri,
+    val title: String,
+    val artist: String,
+    val album: String,
+    val durationMs: Long,
+)
+
+object AudioRepository {
+    fun load(context: Context): List<Track> {
+        val collection = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+        val projection = arrayOf(
+            MediaStore.Audio.Media._ID,
+            MediaStore.Audio.Media.TITLE,
+            MediaStore.Audio.Media.ARTIST,
+            MediaStore.Audio.Media.ALBUM,
+            MediaStore.Audio.Media.DURATION,
+        )
+        val out = ArrayList<Track>()
+        context.contentResolver.query(
+            collection, projection, "${MediaStore.Audio.Media.IS_MUSIC} != 0", null,
+            "${MediaStore.Audio.Media.TITLE} COLLATE NOCASE ASC"
+        )?.use { c ->
+            val idCol = c.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
+            val tCol = c.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
+            val aCol = c.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
+            val alCol = c.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
+            val dCol = c.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
+            while (c.moveToNext()) {
+                val id = c.getLong(idCol)
+                val artist = c.getString(aCol).orEmpty().let { if (it == "<unknown>") "" else it }
+                out += Track(
+                    uri = ContentUris.withAppendedId(collection, id),
+                    title = c.getString(tCol) ?: "Track $id",
+                    artist = artist,
+                    album = c.getString(alCol).orEmpty(),
+                    durationMs = c.getLong(dCol),
+                )
+            }
+        }
+        return out
+    }
+}
+
 /** Playlists, favourites and "recently watched" — phone lone save avthayi. */
 object Library {
     const val FAVOURITES = "__favourites__"
