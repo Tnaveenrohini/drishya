@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Drishya" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/saffron</item>
+        <item name="colorOnPrimary">#1A1205</item>
+        <item name="colorSecondary">@color/green</item>
+        <item name="colorSurface">@color/bg</item>
+        <item name="android:colorBackground">@color/bg</item>
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:statusBarColor">@color/bg</item>
+        <item name="android:navigationBarColor">@color/bg</item>
+        <item name="colorControlNormal">@color/text</item>
+    </style>
+
+    <style name="Theme.Drishya.Player">
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <style name="PlayerIcon">
+        <item name="android:layout_width">44dp</item>
+        <item name="android:layout_height">44dp</item>
+        <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
+        <item name="android:padding">10dp</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:tint">@android:color/white</item>
+    </style>
+</resources>

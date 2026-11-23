@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Drishya</string>
+    <string name="all_videos">All videos</string>
+    <string name="need_permission">Mee phone lo videos chupinchadaniki permission kavali.\nVideos ekkadiki upload avvavu.</string>
+    <string name="no_videos">Phone lo videos emi dorakaledu.</string>
+    <string name="allow">Allow</string>
+    <string name="search">Search</string>
+    <string name="search_hint">Video peru vethakandi…</string>
+    <string name="refresh">Refresh</string>
+    <string name="back">Back</string>
+    <string name="load_subtitles">Load subtitles</string>
+    <string name="resize">Resize</string>
+    <string name="rotate">Rotate</string>
+    <string name="pip">Picture-in-picture</string>
+</resources>

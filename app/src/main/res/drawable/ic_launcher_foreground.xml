@@ -1,0 +1,11 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <!-- white disc -->
+    <path android:fillColor="#FFFFFF" android:pathData="M54,26a28,28 0,1 1,0 56a28,28 0,1 1,0 -56z" />
+    <!-- chakra ring + spokes -->
+    <path android:strokeColor="#1B2A8F" android:strokeWidth="2.4" android:fillColor="#00000000"
+        android:pathData="M54,31a23,23 0,1 1,0 46a23,23 0,1 1,0 -46z" />
+    <path android:strokeColor="#1B2A8F" android:strokeWidth="0.9" android:strokeAlpha="0.35" android:fillColor="#00000000"
+        android:pathData="M74.00,54.00L34.00,54.00M73.32,59.18L34.68,48.82M71.32,64.00L36.68,44.00M68.14,68.14L39.86,39.86M64.00,71.32L44.00,36.68M59.18,73.32L48.82,34.68M54.00,74.00L54.00,34.00M48.82,73.32L59.18,34.68M44.00,71.32L64.00,36.68M39.86,68.14L68.14,39.86M36.68,64.00L71.32,44.00M34.68,59.18L73.32,48.82" />
+    <!-- play -->
+    <path android:fillColor="#1B2A8F" android:pathData="M48,42L48,66L67,54z" />
+</vector>
