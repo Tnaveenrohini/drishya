@@ -1,6 +1,9 @@
 package com.drishya.player
 
+import android.content.Context
 import android.content.SharedPreferences
+import android.util.AttributeSet
+import android.widget.FrameLayout
 import android.graphics.Typeface
 import android.net.Uri
 import android.view.LayoutInflater
@@ -167,5 +170,21 @@ class QueueAdapter(
             h.thumb.setImageDrawable(null)
         }
         h.itemView.setOnClickListener { onClick(h.bindingAdapterPosition) }
+    }
+}
+
+/** Width, height lo chinnadhi tisukuni square ga untundi (max 340dp) — music cover kosam. */
+class SquareFrameLayout @JvmOverloads constructor(
+    context: Context,
+    attrs: AttributeSet? = null,
+) : FrameLayout(context, attrs) {
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        val w = MeasureSpec.getSize(widthMeasureSpec)
+        val h = MeasureSpec.getSize(heightMeasureSpec)
+        val max = (340 * resources.displayMetrics.density).toInt()
+        var size = if (h > 0) minOf(w, h) else w
+        size = minOf(size, max)
+        val spec = MeasureSpec.makeMeasureSpec(size, MeasureSpec.EXACTLY)
+        super.onMeasure(spec, spec)
     }
 }

@@ -279,13 +279,30 @@ class MusicActivity : AppCompatActivity() {
             try { BitmapFactory.decodeByteArray(it, 0, it.size) } catch (_: Throwable) { null }
         }
         if (bmp != null) {
-            smallArt.setImageBitmap(bmp)
-            bigArt.setImageBitmap(bmp)
+            setArt(smallArt, bmp, 0)
+            setArt(bigArt, bmp, 0)
             bgArt.setImageBitmap(blur(bmp))
         } else {
-            smallArt.setImageResource(R.drawable.ic_music)
-            bigArt.setImageResource(R.drawable.ic_logo)
+            // Album art lekapothe: dark tile lo chinna music icon (double border lekunda)
+            setArt(smallArt, null, dp(16))
+            setArt(bigArt, null, dp(72))
             bgArt.setImageDrawable(null)
+        }
+    }
+
+    private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
+
+    private fun setArt(view: ImageView, bmp: Bitmap?, placeholderPad: Int) {
+        if (bmp != null) {
+            view.setPadding(0, 0, 0, 0)
+            view.scaleType = ImageView.ScaleType.CENTER_CROP
+            view.imageTintList = null
+            view.setImageBitmap(bmp)
+        } else {
+            view.setPadding(placeholderPad, placeholderPad, placeholderPad, placeholderPad)
+            view.scaleType = ImageView.ScaleType.FIT_CENTER
+            view.imageTintList = android.content.res.ColorStateList.valueOf(0xFF6E6E6E.toInt())
+            view.setImageResource(R.drawable.ic_music)
         }
     }
 
@@ -445,9 +462,13 @@ class MusicActivity : AppCompatActivity() {
     private fun loadArt(id: String, into: ImageView) {
         into.tag = id
         artCache.get(id)?.let {
+            into.setPadding(0, 0, 0, 0)
+            into.imageTintList = null
             into.setImageBitmap(it)
             return
         }
+        into.setPadding(dp(18), dp(18), dp(18), dp(18))
+        into.imageTintList = android.content.res.ColorStateList.valueOf(0xFF6E6E6E.toInt())
         into.setImageResource(R.drawable.ic_music)
         val uri = Uri.parse(id)
         if (uri.scheme != "content" && uri.scheme != "file") return
@@ -466,7 +487,13 @@ class MusicActivity : AppCompatActivity() {
             }
             if (bmp != null) {
                 artCache.put(id, bmp)
-                runOnUiThread { if (into.tag == id) into.setImageBitmap(bmp) }
+                runOnUiThread {
+                    if (into.tag == id) {
+                        into.setPadding(0, 0, 0, 0)
+                        into.imageTintList = null
+                        into.setImageBitmap(bmp)
+                    }
+                }
             }
         }
     }
