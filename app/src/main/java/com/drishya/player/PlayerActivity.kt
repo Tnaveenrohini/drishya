@@ -72,7 +72,15 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.DefaultTimeBar
 import androidx.media3.ui.PlayerView
 import androidx.media3.ui.TimeBar
+import androidx.mediarouter.app.MediaRouteChooserDialog
+import androidx.mediarouter.app.MediaRouteControllerDialog
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.gms.cast.MediaInfo
+import com.google.android.gms.cast.MediaLoadRequestData
+import com.google.android.gms.cast.MediaSeekOptions
+import com.google.android.gms.cast.framework.CastContext
+import com.google.android.gms.cast.framework.CastSession
+import com.google.android.gms.cast.framework.SessionManagerListener
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -135,6 +143,28 @@ class PlayerActivity : AppCompatActivity() {
     @Volatile private var retriever: MediaMetadataRetriever? = null
     private var thumbBusy = false
     @Volatile private var thumbWanted = -1L
+
+    // Long-press 2x speed
+    private var fastHold = false
+    private var holdSpeed = 1f
+
+    // Cast to TV
+    private var castCtx: CastContext? = null
+    private var castSession: CastSession? = null
+    private lateinit var btnCast: ImageButton
+    private val castListener = object : SessionManagerListener<CastSession> {
+        override fun onSessionStarted(session: CastSession, sessionId: String) = startCasting(session)
+        override fun onSessionResumed(session: CastSession, wasSuspended: Boolean) = startCasting(session)
+        override fun onSessionEnded(session: CastSession, error: Int) = stopCasting()
+        override fun onSessionStartFailed(session: CastSession, error: Int) {
+            showHud(getString(R.string.cast_failed), 2000)
+        }
+        override fun onSessionStarting(session: CastSession) {}
+        override fun onSessionEnding(session: CastSession) {}
+        override fun onSessionResuming(session: CastSession, sessionId: String) {}
+        override fun onSessionResumeFailed(session: CastSession, error: Int) {}
+        override fun onSessionSuspended(session: CastSession, reason: Int) {}
+    }
 
     // A-B repeat
     private var abA = C.TIME_UNSET
@@ -278,6 +308,10 @@ class PlayerActivity : AppCompatActivity() {
         // top bar
         findViewById<View>(R.id.btn_back).setOnClickListener { finish() }
         findViewById<View>(R.id.btn_pip).setOnClickListener { enterPip() }
+        btnCast = findViewById(R.id.btn_cast)
+        castCtx = Cast.context(this)
+        btnCast.visibility = if (castCtx != null) View.VISIBLE else View.GONE
+        btnCast.setOnClickListener { castClicked() }
         findViewById<View>(R.id.btn_queue).setOnClickListener { openQueue() }
         findViewById<View>(R.id.btn_more).setOnClickListener { openSettings() }
         // middle + bottom
@@ -308,7 +342,10 @@ class PlayerActivity : AppCompatActivity() {
             override fun onScrubStop(timeBar: TimeBar, position: Long, canceled: Boolean) {
                 scrubbing = false
                 stopPreview()
-                if (!canceled) player?.seekTo(position)
+                val remote = castSession?.remoteMediaClient
+                if (!canceled && remote != null) {
+                    remote.seek(MediaSeekOptions.Builder().setPosition(position).build())
+                } else if (!canceled) player?.seekTo(position)
                 bumpHide()
             }
         })
@@ -338,6 +375,17 @@ class PlayerActivity : AppCompatActivity() {
         }
         attachPlayer()
         showControls()
+        castCtx?.sessionManager?.let { sm ->
+            sm.addSessionManagerListener(castListener, CastSession::class.java)
+            val cur = sm.currentCastSession
+            if (cur != null && cur.isConnected) {
+                castSession = cur
+                btnCast.setImageResource(R.drawable.ic_cast_connected)
+            } else if (castSession != null) {
+                castSession = null
+                btnCast.setImageResource(R.drawable.ic_cast)
+            }
+        }
     }
 
     override fun onResume() {
@@ -351,6 +399,8 @@ class PlayerActivity : AppCompatActivity() {
         handler.removeCallbacks(saveTick)
         handler.removeCallbacks(progressTick)
         handler.removeCallbacks(abTick)
+        castCtx?.sessionManager?.removeSessionManagerListener(castListener, CastSession::class.java)
+        if (fastHold) endFastHold()
         val p = player
         if (p != null) {
             val keep = (bgPlay || audioOnly || playingAudio()) && p.isPlaying
@@ -617,6 +667,21 @@ class PlayerActivity : AppCompatActivity() {
     private fun updateProgress() {
         val p = player ?: return
         if (controls.visibility != View.VISIBLE) return
+        val remote = castSession?.remoteMediaClient
+        if (remote != null && remote.hasMediaSession()) {
+            val rd = remote.streamDuration
+            val rp = remote.approximateStreamPosition
+            if (rd > 0) {
+                timeBar.setDuration(rd)
+                durText.text = formatTime(rd)
+            }
+            if (!scrubbing) {
+                timeBar.setPosition(rp)
+                posText.text = formatTime(rp)
+            }
+            btnPlay.setImageResource(if (remote.isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
+            return
+        }
         val dur = p.duration
         val pos = p.currentPosition
         if (dur != C.TIME_UNSET && dur > 0) {
@@ -636,6 +701,10 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun togglePlay() {
+        castSession?.remoteMediaClient?.let {
+            it.togglePlayback()
+            return
+        }
         val p = player ?: return
         if (p.isPlaying) {
             p.pause()
@@ -1652,6 +1721,16 @@ class PlayerActivity : AppCompatActivity() {
                 return true
             }
 
+            override fun onLongPress(e: MotionEvent) {
+                val p = player ?: return
+                if (mode != Mode.NONE || zooming || !p.isPlaying || castSession != null) return
+                holdSpeed = p.playbackParameters.speed
+                p.playbackParameters = PlaybackParameters(2f)
+                fastHold = true
+                root.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
+                showHud("2x  ▶▶", 60_000)
+            }
+
             override fun onDoubleTap(e: MotionEvent): Boolean {
                 val p = player ?: return true
                 val w = root.width
@@ -1761,6 +1840,7 @@ class PlayerActivity : AppCompatActivity() {
             }
             if (!zooming) detector.onTouchEvent(ev)
             if (ev.actionMasked == MotionEvent.ACTION_UP || ev.actionMasked == MotionEvent.ACTION_CANCEL) {
+                if (fastHold) endFastHold()
                 if (mode == Mode.SEEK) player?.seekTo(seekTarget)
                 mode = Mode.NONE
                 zooming = false
@@ -1770,6 +1850,105 @@ class PlayerActivity : AppCompatActivity() {
         // Controls overlay khaali chotu + video rendu meedha gestures
         controls.setOnTouchListener(touch)
         playerView.setOnTouchListener(touch)
+    }
+
+    private fun endFastHold() {
+        fastHold = false
+        player?.playbackParameters = PlaybackParameters(holdSpeed)
+        handler.removeCallbacks(hideHud)
+        hud.visibility = View.GONE
+    }
+
+    // ================================================================ cast to TV
+
+    private fun castClicked() {
+        val ctx = castCtx ?: return
+        val session = ctx.sessionManager.currentCastSession
+        try {
+            if (session != null && session.isConnected) {
+                MediaRouteControllerDialog(this).show()
+            } else {
+                val selector = ctx.mergedSelector ?: return
+                MediaRouteChooserDialog(this).apply {
+                    routeSelector = selector
+                    show()
+                }
+            }
+        } catch (_: Exception) {
+            showHud(getString(R.string.cast_failed), 2000)
+        }
+    }
+
+    private fun mimeOf(uri: Uri): String {
+        val t = try { contentResolver.getType(uri) } catch (_: Exception) { null }
+        if (!t.isNullOrBlank() && t != "application/octet-stream") return t
+        val s = uri.toString().lowercase()
+        return when {
+            ".m3u8" in s -> "application/x-mpegURL"
+            ".mpd" in s -> "application/dash+xml"
+            s.endsWith(".mkv") -> "video/x-matroska"
+            s.endsWith(".webm") -> "video/webm"
+            s.endsWith(".mp3") -> "audio/mpeg"
+            else -> "video/mp4"
+        }
+    }
+
+    private fun startCasting(session: CastSession) {
+        castSession = session
+        btnCast.setImageResource(R.drawable.ic_cast_connected)
+        val p = player
+        val item = p?.currentMediaItem ?: PlayerHolder.peek()?.currentMediaItem ?: return
+        val remote = session.remoteMediaClient ?: return
+        // TV lo ippatike ide play avuthunte malli load cheyyoddu
+        if (remote.hasMediaSession() && remote.mediaInfo?.customData?.optString("id") == item.mediaId) {
+            p?.pause()
+            return
+        }
+        val uri = Uri.parse(item.mediaId)
+        val mime = mimeOf(uri)
+        val url = when (uri.scheme) {
+            "http", "https" -> uri.toString()
+            "content", "file" -> LocalServer.serve(this, uri, mime)
+            else -> {
+                showHud(getString(R.string.cast_unsupported), 2500)
+                return
+            }
+        }
+        if (url == null) {
+            showHud(getString(R.string.cast_no_wifi), 2500)
+            return
+        }
+        val meta = com.google.android.gms.cast.MediaMetadata(com.google.android.gms.cast.MediaMetadata.MEDIA_TYPE_MOVIE)
+        meta.putString(com.google.android.gms.cast.MediaMetadata.KEY_TITLE, item.mediaMetadata.title?.toString() ?: "Flikk Play")
+        val info = MediaInfo.Builder(url)
+            .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED)
+            .setContentType(mime)
+            .setMetadata(meta)
+            .setCustomData(org.json.JSONObject().put("id", item.mediaId))
+            .build()
+        val pos = p?.currentPosition ?: 0L
+        remote.load(
+            MediaLoadRequestData.Builder()
+                .setMediaInfo(info)
+                .setAutoplay(true)
+                .setCurrentTime(pos)
+                .build()
+        )
+        p?.pause()
+        val name = session.castDevice?.friendlyName ?: "TV"
+        showHud(getString(R.string.casting_to, name), 2500)
+        showControls()
+    }
+
+    private fun stopCasting() {
+        val last = castSession?.remoteMediaClient?.approximateStreamPosition ?: -1L
+        castSession = null
+        LocalServer.stop()
+        btnCast.setImageResource(R.drawable.ic_cast)
+        if (last > 0) player?.seekTo(last)
+        showHud(getString(R.string.cast_stopped), 1500)
+        updatePlayIcon()
+        showControls()
     }
 
     private fun showHud(text: CharSequence, ms: Long = 700) {

@@ -59,6 +59,13 @@
                 android:textStyle="bold" />
 
             <ImageButton
+                android:id="@+id/btn_cast"
+                style="@style/PlayerIcon"
+                android:contentDescription="@string/cast_to_tv"
+                android:src="@drawable/ic_cast"
+                android:visibility="gone" />
+
+            <ImageButton
                 android:id="@+id/btn_pip"
                 style="@style/PlayerIcon"
                 android:contentDescription="@string/pip"

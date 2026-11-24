@@ -216,4 +216,10 @@
     <string name="private_note">Hidden only inside Flikk Play</string>
     <string name="unlock_fingerprint">Unlock with fingerprint</string>
     <string name="use_pin">Use PIN</string>
+    <string name="cast_to_tv">Cast to TV</string>
+    <string name="casting_to">Playing on %1$s</string>
+    <string name="cast_stopped">Back on phone</string>
+    <string name="cast_failed">Couldn't connect to TV</string>
+    <string name="cast_unsupported">This video can't be cast</string>
+    <string name="cast_no_wifi">Connect phone and TV to the same Wi-Fi</string>
 </resources>

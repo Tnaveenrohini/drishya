@@ -209,4 +209,10 @@
     <string name="private_note">Flikk Play లో మాత్రమే దాచబడతాయి</string>
     <string name="unlock_fingerprint">ఫింగర్‌ప్రింట్‌తో తెరవండి</string>
     <string name="use_pin">PIN వాడండి</string>
+    <string name="cast_to_tv">TV కి కాస్ట్</string>
+    <string name="casting_to">%1$s లో ప్లే అవుతోంది</string>
+    <string name="cast_stopped">మళ్ళీ ఫోన్‌లో</string>
+    <string name="cast_failed">TV కి కనెక్ట్ కాలేదు</string>
+    <string name="cast_unsupported">ఈ వీడియో కాస్ట్ చేయలేము</string>
+    <string name="cast_no_wifi">ఫోన్, TV ఒకే Wi-Fi లో ఉండాలి</string>
 </resources>

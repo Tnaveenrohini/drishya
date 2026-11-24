@@ -195,4 +195,10 @@
     <string name="private_note">सिर्फ़ Flikk Play में छिपे रहेंगे</string>
     <string name="unlock_fingerprint">फ़िंगरप्रिंट से खोलें</string>
     <string name="use_pin">PIN इस्तेमाल करें</string>
+    <string name="cast_to_tv">TV पर कास्ट</string>
+    <string name="casting_to">%1$s पर चल रहा है</string>
+    <string name="cast_stopped">वापस फ़ोन पर</string>
+    <string name="cast_failed">TV से कनेक्ट नहीं हुआ</string>
+    <string name="cast_unsupported">यह वीडियो कास्ट नहीं हो सकता</string>
+    <string name="cast_no_wifi">फ़ोन और TV एक ही Wi-Fi पर हों</string>
 </resources>
