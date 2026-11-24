@@ -61,7 +61,7 @@
             <ImageButton
                 android:id="@+id/btn_cast"
                 style="@style/PlayerIcon"
-                android:contentDescription="@string/cast_to_tv"
+                android:contentDescription="@string/fp_cast_to_tv"
                 android:src="@drawable/ic_cast"
                 android:visibility="gone" />
 

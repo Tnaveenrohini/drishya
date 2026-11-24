@@ -157,7 +157,7 @@ class PlayerActivity : AppCompatActivity() {
         override fun onSessionResumed(session: CastSession, wasSuspended: Boolean) = startCasting(session)
         override fun onSessionEnded(session: CastSession, error: Int) = stopCasting()
         override fun onSessionStartFailed(session: CastSession, error: Int) {
-            showHud(getString(R.string.cast_failed), 2000)
+            showHud(getString(R.string.fp_cast_failed), 2000)
         }
         override fun onSessionStarting(session: CastSession) {}
         override fun onSessionEnding(session: CastSession) {}
@@ -1875,7 +1875,7 @@ class PlayerActivity : AppCompatActivity() {
                 }
             }
         } catch (_: Exception) {
-            showHud(getString(R.string.cast_failed), 2000)
+            showHud(getString(R.string.fp_cast_failed), 2000)
         }
     }
 
@@ -1910,12 +1910,12 @@ class PlayerActivity : AppCompatActivity() {
             "http", "https" -> uri.toString()
             "content", "file" -> LocalServer.serve(this, uri, mime)
             else -> {
-                showHud(getString(R.string.cast_unsupported), 2500)
+                showHud(getString(R.string.fp_cast_unsupported), 2500)
                 return
             }
         }
         if (url == null) {
-            showHud(getString(R.string.cast_no_wifi), 2500)
+            showHud(getString(R.string.fp_cast_no_wifi), 2500)
             return
         }
         val meta = com.google.android.gms.cast.MediaMetadata(com.google.android.gms.cast.MediaMetadata.MEDIA_TYPE_MOVIE)
@@ -1936,7 +1936,7 @@ class PlayerActivity : AppCompatActivity() {
         )
         p?.pause()
         val name = session.castDevice?.friendlyName ?: "TV"
-        showHud(getString(R.string.casting_to, name), 2500)
+        showHud(getString(R.string.fp_casting_to, name), 2500)
         showControls()
     }
 
@@ -1946,7 +1946,7 @@ class PlayerActivity : AppCompatActivity() {
         LocalServer.stop()
         btnCast.setImageResource(R.drawable.ic_cast)
         if (last > 0) player?.seekTo(last)
-        showHud(getString(R.string.cast_stopped), 1500)
+        showHud(getString(R.string.fp_cast_stopped), 1500)
         updatePlayIcon()
         showControls()
     }

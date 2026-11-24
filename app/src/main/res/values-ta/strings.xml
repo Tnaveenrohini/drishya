@@ -195,10 +195,10 @@
     <string name="private_note">Flikk Play-இல் மட்டும் மறைக்கப்படும்</string>
     <string name="unlock_fingerprint">கைரேகை மூலம் திறக்கவும்</string>
     <string name="use_pin">PIN பயன்படுத்து</string>
-    <string name="cast_to_tv">TV-க்கு காஸ்ட்</string>
-    <string name="casting_to">%1$s-இல் இயங்குகிறது</string>
-    <string name="cast_stopped">மீண்டும் போனில்</string>
-    <string name="cast_failed">TV-உடன் இணைக்க முடியவில்லை</string>
-    <string name="cast_unsupported">இந்த வீடியோவை காஸ்ட் செய்ய முடியாது</string>
-    <string name="cast_no_wifi">போனும் TV-யும் ஒரே Wi-Fi-இல் இருக்க வேண்டும்</string>
+    <string name="fp_cast_to_tv">TV-க்கு காஸ்ட்</string>
+    <string name="fp_casting_to">%1$s-இல் இயங்குகிறது</string>
+    <string name="fp_cast_stopped">மீண்டும் போனில்</string>
+    <string name="fp_cast_failed">TV-உடன் இணைக்க முடியவில்லை</string>
+    <string name="fp_cast_unsupported">இந்த வீடியோவை காஸ்ட் செய்ய முடியாது</string>
+    <string name="fp_cast_no_wifi">போனும் TV-யும் ஒரே Wi-Fi-இல் இருக்க வேண்டும்</string>
 </resources>
