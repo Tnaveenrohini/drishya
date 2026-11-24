@@ -27,6 +27,8 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.core.os.LocaleListCompat
@@ -64,7 +66,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var selectBar: View
     private lateinit var bottomNav: BottomNavigationView
 
-    private var allVideos: List<Video> = emptyList()
+    private var rawVideos: List<Video> = emptyList()   // anni (private tho kalipi)
+    private var allVideos: List<Video> = emptyList()   // private kakunda
     private var allTracks: List<Track> = emptyList()
     private var loaded = false
     private var section = Section.LOCAL
@@ -72,6 +75,17 @@ class MainActivity : AppCompatActivity() {
     private var openFolder: String? = null
     private var openPlaylist: String? = null
     private var query = ""
+
+    // music sub-tabs: 0 Songs, 1 Albums, 2 Artists
+    private var musicTab = 0
+    private var openAlbum: String? = null
+    private var openArtist: String? = null
+    private var tabsMusic: Boolean? = null
+    private var tabsRebuilding = false
+
+    // private folder
+    private var privateOpen = false
+    private var launching = false
 
     // selection mode
     private var selecting = false
@@ -162,11 +176,17 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        listOf(R.string.title_videos, R.string.tab_folders, R.string.tab_playlists, R.string.tab_recent)
-            .forEach { tabs.addTab(tabs.newTab().setText(it)) }
+        setupTabs(music = false)
         tabs.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(t: TabLayout.Tab) {
-                tab = t.position
+                if (tabsRebuilding) return
+                if (tabsMusic == true) {
+                    musicTab = t.position
+                    openAlbum = null
+                    openArtist = null
+                } else {
+                    tab = t.position
+                }
                 stopSelecting(render = false)
                 render()
             }
@@ -187,6 +207,9 @@ class MainActivity : AppCompatActivity() {
             openPlaylist = null
             openServer = null
             smbEntries = null
+            openAlbum = null
+            openArtist = null
+            privateOpen = false
             stopSelecting(render = false)
             render()
             true
@@ -197,7 +220,36 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        launching = false
         refresh()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // App nunchi bayataki vellithe private folder malli lock
+        if (!launching && privateOpen) {
+            privateOpen = false
+            stopSelecting(render = false)
+        }
+    }
+
+    /** Videos tabs leda Music tabs — okate TabLayout. */
+    private fun setupTabs(music: Boolean) {
+        if (tabsMusic == music) return
+        tabsMusic = music
+        tabsRebuilding = true
+        tabs.removeAllTabs()
+        val labels = if (music) listOf(R.string.tab_songs, R.string.tab_albums, R.string.tab_artists)
+        else listOf(R.string.title_videos, R.string.tab_folders, R.string.tab_playlists, R.string.tab_recent)
+        labels.forEach { tabs.addTab(tabs.newTab().setText(it)) }
+        val sel = if (music) musicTab else tab
+        tabs.getTabAt(sel)?.select()
+        tabsRebuilding = false
+    }
+
+    private fun applyPrivacy() {
+        val hidden = Privacy.all(this)
+        allVideos = if (hidden.isEmpty()) rawVideos else rawVideos.filter { it.uri.toString() !in hidden }
     }
 
     // ------------------------------------------------------------ permission + data
@@ -245,7 +297,8 @@ class MainActivity : AppCompatActivity() {
             } else emptyList()
             runOnUiThread {
                 if (isDestroyed) return@runOnUiThread
-                allVideos = list
+                rawVideos = list
+                applyPrivacy()
                 allTracks = tracks
                 loaded = true
                 render()
@@ -270,12 +323,17 @@ class MainActivity : AppCompatActivity() {
             }
             return
         }
-        if (searchBox.visibility == View.VISIBLE && openFolder == null && openPlaylist == null) {
+        if (searchBox.visibility == View.VISIBLE && openFolder == null && openPlaylist == null &&
+            openAlbum == null && openArtist == null
+        ) {
             toggleSearch()
             return
         }
         openFolder = null
         openPlaylist = null
+        openAlbum = null
+        openArtist = null
+        privateOpen = false
         render()
     }
 
@@ -364,7 +422,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun render() {
         val server = openServer
-        val inside = openFolder != null || openPlaylist != null || server != null
+        val inside = openFolder != null || openPlaylist != null || server != null ||
+            openAlbum != null || openArtist != null || privateOpen
         backCallback.isEnabled = inside || selecting || searchBox.visibility == View.VISIBLE
 
         header.visibility = if (selecting) View.GONE else View.VISIBLE
@@ -372,16 +431,21 @@ class MainActivity : AppCompatActivity() {
         selectBar.visibility = if (selecting) View.VISIBLE else View.GONE
         btnBack.visibility = if (inside) View.VISIBLE else View.GONE
         val local = section == Section.LOCAL
-        btnSelect.visibility = if (local && (tab == 0 || tab == 3 || inside)) View.VISIBLE else View.GONE
+        btnSelect.visibility = if ((local && (tab == 0 || tab == 3 || inside)) || privateOpen) View.VISIBLE else View.GONE
         btnMenu.visibility = if (local) View.VISIBLE else View.GONE
         btnSearch.visibility = if (section == Section.LOCAL || section == Section.MUSIC) View.VISIBLE else View.GONE
-        tabs.visibility = if (local && !inside && !selecting) View.VISIBLE else View.GONE
+        val music = section == Section.MUSIC
+        if (local || music) setupTabs(music)
+        tabs.visibility = if ((local || music) && !inside && !selecting) View.VISIBLE else View.GONE
         if (selecting) selCount.text = getString(R.string.selected_count, selected.size)
 
         bigTitle.text = when {
             server != null -> if (smbPath.isEmpty()) server.share else smbPath.substringAfterLast('/')
             openFolder != null -> openFolder
             openPlaylist != null -> playlistLabel(openPlaylist!!)
+            openAlbum != null -> openAlbum
+            openArtist != null -> openArtist
+            privateOpen -> getString(R.string.private_folder)
             section == Section.MUSIC -> getString(R.string.tab_music)
             section == Section.NETWORK -> getString(R.string.tab_network)
             section == Section.ME -> getString(R.string.nav_me)
@@ -396,7 +460,7 @@ class MainActivity : AppCompatActivity() {
             }
             Section.ME -> {
                 miniBar.visibility = View.GONE
-                renderMe()
+                if (privateOpen) renderPrivate() else renderMe()
                 return
             }
             else -> Unit
@@ -561,7 +625,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun selectedVideos(): List<Video> {
-        val byUri = allVideos.associateBy { it.uri.toString() }
+        val byUri = rawVideos.associateBy { it.uri.toString() }
         return selected.mapNotNull { byUri[it] }
     }
 
@@ -586,7 +650,12 @@ class MainActivity : AppCompatActivity() {
     private fun addSelectedToPlaylist() {
         val uris = selectedVideos().map { it.uri.toString() }
         if (uris.isEmpty()) return
-        choosePlaylist(uris)
+        if (privateOpen) {
+            uris.forEach { Privacy.remove(this, it) }
+            afterPrivacyChange()
+            return
+        }
+        choosePlaylist(uris, allowPrivate = true)
     }
 
     // ------------------------------------------------------------ per-video menu
@@ -601,6 +670,9 @@ class MainActivity : AppCompatActivity() {
             getString(R.string.share),
         )
         if (inPlaylist != null) options += getString(R.string.remove_from_playlist)
+        val isPriv = Privacy.isPrivate(this, uri)
+        options += getString(if (isPriv) R.string.remove_private else R.string.move_private)
+        val privIndex = options.size - 1
         options += getString(R.string.delete_video)
         val deleteIndex = options.size - 1
         MaterialAlertDialogBuilder(this)
@@ -608,6 +680,10 @@ class MainActivity : AppCompatActivity() {
             .setItems(options.toTypedArray()) { _, which ->
                 when {
                     which == deleteIndex -> askDelete(listOf(v))
+                    which == privIndex -> {
+                        if (isPriv) Privacy.remove(this, uri) else movePrivate(listOf(uri))
+                        afterPrivacyChange()
+                    }
                     which == 0 -> {
                         Library.toggleFavourite(this, uri)
                         if (!fav) toast(getString(R.string.added_to, getString(R.string.favourites)))
@@ -624,13 +700,17 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun choosePlaylist(uris: List<String>) {
+    private fun choosePlaylist(uris: List<String>, allowPrivate: Boolean = false) {
         val names = listOf(Library.FAVOURITES) + Library.userPlaylistNames(this)
-        val labels = names.map { playlistLabel(it) } + getString(R.string.new_playlist)
+        val labels = names.map { playlistLabel(it) } + getString(R.string.new_playlist) +
+            (if (allowPrivate) listOf(getString(R.string.move_private)) else emptyList())
         MaterialAlertDialogBuilder(this)
             .setTitle(R.string.add_to_playlist)
             .setItems(labels.toTypedArray()) { _, which ->
-                if (which < names.size) {
+                if (allowPrivate && which == labels.size - 1) {
+                    movePrivate(uris)
+                    afterPrivacyChange()
+                } else if (which < names.size) {
                     uris.forEach { Library.add(this, names[which], it) }
                     toast(getString(R.string.added_to, labels[which]))
                     stopSelecting()
@@ -736,7 +816,9 @@ class MainActivity : AppCompatActivity() {
         if (!keepPending) pendingDelete = emptyList()
         val gone = list.map { it.uri }.toSet()
         list.forEach { Library.forget(this, it.uri.toString()) }
-        allVideos = allVideos.filter { it.uri !in gone }
+        rawVideos = rawVideos.filter { it.uri !in gone }
+        list.forEach { Privacy.remove(this, it.uri.toString()) }
+        applyPrivacy()
         toast(getString(R.string.deleted))
         selecting = false
         selected.clear()
@@ -751,8 +833,37 @@ class MainActivity : AppCompatActivity() {
             showEmpty(getString(R.string.need_audio_permission), showButton = true)
             return
         }
-        val list = if (q.isEmpty()) allTracks
-        else allTracks.filter { it.title.lowercase().contains(q) || it.artist.lowercase().contains(q) }
+        if (allTracks.isEmpty()) {
+            subTitle.text = ""
+            showEmpty(getString(R.string.no_music), showButton = false)
+            return
+        }
+        val album = openAlbum
+        val artist = openArtist
+        when {
+            album != null -> showSongs(allTracks.filter { albumOf(it) == album }, q)
+            artist != null -> showSongs(allTracks.filter { artistOf(it) == artist }, q)
+            q.isNotEmpty() || musicTab == 0 -> showSongs(allTracks, q)
+            musicTab == 1 -> showGroups(allTracks.groupBy { albumOf(it) }, R.drawable.ic_library) { name ->
+                openAlbum = name
+                render()
+            }
+            else -> showGroups(allTracks.groupBy { artistOf(it) }, R.drawable.ic_person) { name ->
+                openArtist = name
+                render()
+            }
+        }
+    }
+
+    private fun albumOf(t: Track) =
+        t.album.takeIf { it.isNotBlank() && it != "<unknown>" } ?: getString(R.string.unknown_album)
+
+    private fun artistOf(t: Track) =
+        t.artist.takeIf { it.isNotBlank() && it != "<unknown>" } ?: getString(R.string.unknown_artist)
+
+    private fun showSongs(source: List<Track>, q: String) {
+        val list = if (q.isEmpty()) source
+        else source.filter { it.title.lowercase().contains(q) || it.artist.lowercase().contains(q) || it.album.lowercase().contains(q) }
         if (list.isEmpty()) {
             subTitle.text = ""
             showEmpty(getString(R.string.no_music), showButton = false)
@@ -761,14 +872,162 @@ class MainActivity : AppCompatActivity() {
         hideEmpty()
         subTitle.text = getString(R.string.count_songs, list.size)
         recycler.adapter = RowAdapter(list.mapIndexed { i, t ->
-            val artist = t.artist.ifBlank { getString(R.string.unknown_artist) }
-            Row(t.title, "$artist · ${formatTime(t.durationMs)}", R.drawable.ic_music, onClick = {
+            Row(t.title, "${artistOf(t)} · ${formatTime(t.durationMs)}", R.drawable.ic_music, onClick = {
                 launchPlayer(
                     list.map { it.uri.toString() }, list.map { it.title }, i,
                     audio = true, artists = list.map { it.artist }, durations = list.map { it.durationMs },
                 )
             })
         })
+    }
+
+    private fun showGroups(groups: Map<String, List<Track>>, icon: Int, open: (String) -> Unit) {
+        hideEmpty()
+        val sortedGroups = groups.toList().sortedBy { it.first.lowercase() }
+        subTitle.text = getString(R.string.count_songs, allTracks.size)
+        recycler.adapter = RowAdapter(sortedGroups.map { (name, songs) ->
+            Row(name, getString(R.string.count_songs, songs.size), icon, onClick = { open(name) })
+        })
+    }
+
+    // ------------------------------------------------------------ private folder
+
+    private fun movePrivate(uris: List<String>) {
+        if (!Privacy.hasPin(this)) {
+            // Mundu PIN set cheyyali, lekapothe tirigi teyalemu
+            setPinDialog { movePrivate(uris) }
+            return
+        }
+        Privacy.add(this, uris)
+        toast(getString(R.string.moved_private, uris.size))
+    }
+
+    private fun afterPrivacyChange() {
+        applyPrivacy()
+        stopSelecting(render = false)
+        render()
+    }
+
+    private fun renderPrivate() {
+        val hidden = Privacy.all(this)
+        val list = sorted(rawVideos.filter { it.uri.toString() in hidden })
+        if (list.isEmpty()) {
+            subTitle.text = getString(R.string.private_note)
+            showEmpty(getString(R.string.private_empty), showButton = false)
+            shownVideos = emptyList()
+            return
+        }
+        showVideos(list, query.trim().lowercase())
+        subTitle.text = getString(R.string.count_videos, list.size) + " · " + getString(R.string.private_note)
+    }
+
+    private fun openPrivateNow() {
+        privateOpen = true
+        render()
+    }
+
+    private fun unlockPrivate() {
+        if (!Privacy.hasPin(this)) {
+            setPinDialog { openPrivateNow() }
+            return
+        }
+        val auth = BiometricManager.Authenticators.BIOMETRIC_WEAK
+        val canBio = try {
+            BiometricManager.from(this).canAuthenticate(auth) == BiometricManager.BIOMETRIC_SUCCESS
+        } catch (_: Exception) {
+            false
+        }
+        if (!canBio) {
+            pinDialog()
+            return
+        }
+        val prompt = BiometricPrompt(this, ContextCompat.getMainExecutor(this),
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    openPrivateNow()
+                }
+
+                override fun onAuthenticationError(code: Int, msg: CharSequence) {
+                    if (code == BiometricPrompt.ERROR_NEGATIVE_BUTTON) pinDialog()
+                }
+            })
+        val info = BiometricPrompt.PromptInfo.Builder()
+            .setTitle(getString(R.string.private_folder))
+            .setSubtitle(getString(R.string.unlock_fingerprint))
+            .setNegativeButtonText(getString(R.string.use_pin))
+            .setAllowedAuthenticators(auth)
+            .build()
+        try {
+            prompt.authenticate(info)
+        } catch (_: Exception) {
+            pinDialog()
+        }
+    }
+
+    private fun pinInput(): Pair<EditText, FrameLayout> {
+        val input = EditText(this).apply {
+            hint = "••••"
+            isSingleLine = true
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
+            filters = arrayOf(android.text.InputFilter.LengthFilter(4))
+            gravity = android.view.Gravity.CENTER
+            textSize = 24f
+        }
+        val pad = (20 * resources.displayMetrics.density).toInt()
+        val box = FrameLayout(this).apply {
+            setPadding(pad, pad / 2, pad, 0)
+            addView(input)
+        }
+        return input to box
+    }
+
+    private fun pinDialog() {
+        val (input, box) = pinInput()
+        val d = MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.private_enter_pin)
+            .setView(box)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                if (Privacy.checkPin(this, input.text.toString())) openPrivateNow()
+                else toast(getString(R.string.private_wrong_pin))
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+        input.requestFocus()
+        d.window?.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
+    }
+
+    private fun setPinDialog(onDone: () -> Unit) {
+        val (input, box) = pinInput()
+        val d = MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.private_set_pin)
+            .setMessage(R.string.private_note)
+            .setView(box)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                val first = input.text.toString()
+                if (first.length != 4) {
+                    toast(getString(R.string.private_set_pin))
+                    return@setPositiveButton
+                }
+                val (again, box2) = pinInput()
+                MaterialAlertDialogBuilder(this)
+                    .setTitle(R.string.private_confirm_pin)
+                    .setView(box2)
+                    .setPositiveButton(android.R.string.ok) { _, _ ->
+                        if (again.text.toString() == first) {
+                            Privacy.setPin(this, first)
+                            onDone()
+                        } else {
+                            toast(getString(R.string.private_pin_mismatch))
+                        }
+                    }
+                    .setNegativeButton(R.string.cancel, null)
+                    .show()
+                    .window?.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+        input.requestFocus()
+        d.window?.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
     }
 
     /** Music tab lo "ippudu play avuthunna paata" bar — tap chesthe music screen. */
@@ -822,6 +1081,12 @@ class MainActivity : AppCompatActivity() {
                     settings.edit().putBoolean(Prefs.BG_PLAY, !bg).apply()
                     render()
                 },
+            ),
+            Row(
+                getString(R.string.private_folder),
+                getString(R.string.count_videos, Privacy.all(this).size),
+                R.drawable.ic_lock,
+                onClick = { unlockPrivate() },
             ),
             Row(getString(R.string.open_url), "", R.drawable.ic_link, onClick = { openUrlDialog() }),
             Row(getString(R.string.scan_videos), "", R.drawable.ic_refresh, onClick = { scanForVideos() }),
@@ -1030,6 +1295,7 @@ class MainActivity : AppCompatActivity() {
         durations: List<Long>? = null,
     ) {
         if (index !in uris.indices) return
+        launching = true
         // Intent size limit dhaatakunda, chuttupakkala items matrame playlist lo pampistham
         val from = (index - 100).coerceAtLeast(0)
         val to = (index + 200).coerceAtMost(uris.size)

@@ -190,4 +190,30 @@
     <string name="repeat_off">Repeat off</string>
     <string name="language_tamil" translatable="false">தமிழ்</string>
     <string name="language_hindi" translatable="false">हिन्दी</string>
+    <string name="ab_repeat">A-B repeat</string>
+    <string name="ab_set_a">A set at %1$s · tap again for B</string>
+    <string name="ab_set_b">Repeating %1$s – %2$s</string>
+    <string name="ab_cleared">A-B repeat off</string>
+    <string name="add_bookmark">Add bookmark</string>
+    <string name="bookmarks">Bookmarks</string>
+    <string name="bookmark_added">Bookmark added at %1$s</string>
+    <string name="no_bookmarks">No bookmarks yet</string>
+    <string name="bookmark_clear">Clear all</string>
+    <string name="tab_songs">Songs</string>
+    <string name="tab_albums">Albums</string>
+    <string name="tab_artists">Artists</string>
+    <string name="unknown_album">Unknown album</string>
+    <string name="private_folder">Private folder</string>
+    <string name="move_private">Move to Private</string>
+    <string name="remove_private">Remove from Private</string>
+    <string name="moved_private">%1$d moved to Private folder</string>
+    <string name="private_set_pin">Set a 4-digit PIN</string>
+    <string name="private_enter_pin">Enter PIN</string>
+    <string name="private_confirm_pin">Confirm PIN</string>
+    <string name="private_wrong_pin">Wrong PIN</string>
+    <string name="private_pin_mismatch">PINs don\'t match</string>
+    <string name="private_empty">No private videos. Use ⋮ → Move to Private on any video.</string>
+    <string name="private_note">Hidden only inside Flikk Play</string>
+    <string name="unlock_fingerprint">Unlock with fingerprint</string>
+    <string name="use_pin">Use PIN</string>
 </resources>

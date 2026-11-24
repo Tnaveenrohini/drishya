@@ -31,9 +31,33 @@ object PlayerHolder {
     var sleepAtEnd = false
         private set
 
-    private val sleepRunnable = Runnable {
-        player?.pause()
-        sleepAt = 0L
+    // Sleep timer: chivari 10 seconds lo volume nemmadiga taggi, tarvata pause
+    private const val FADE_MS = 10_000L
+    private var fadeFromVolume = -1f
+    private val fadeStart = Runnable { startFade() }
+    private val fadeStep = object : Runnable {
+        var step = 0
+        override fun run() {
+            val p = player ?: return
+            step++
+            val steps = 20
+            p.volume = (fadeFromVolume * (1f - step / steps.toFloat())).coerceAtLeast(0f)
+            if (step >= steps) {
+                p.pause()
+                p.volume = fadeFromVolume
+                fadeFromVolume = -1f
+                sleepAt = 0L
+            } else {
+                handler.postDelayed(this, FADE_MS / steps)
+            }
+        }
+    }
+
+    private fun startFade() {
+        val p = player ?: return
+        fadeFromVolume = p.volume
+        fadeStep.step = 0
+        handler.post(fadeStep)
     }
 
     fun get(context: Context): ExoPlayer {
@@ -158,8 +182,9 @@ object PlayerHolder {
 
     fun setSleep(minutes: Int) {
         cancelSleep()
-        sleepAt = SystemClock.elapsedRealtime() + minutes * 60_000L
-        handler.postDelayed(sleepRunnable, minutes * 60_000L)
+        val total = minutes * 60_000L
+        sleepAt = SystemClock.elapsedRealtime() + total
+        handler.postDelayed(fadeStart, (total - FADE_MS).coerceAtLeast(0L))
     }
 
     fun setSleepAtEnd() {
@@ -169,7 +194,12 @@ object PlayerHolder {
     }
 
     fun cancelSleep() {
-        handler.removeCallbacks(sleepRunnable)
+        handler.removeCallbacks(fadeStart)
+        handler.removeCallbacks(fadeStep)
+        if (fadeFromVolume >= 0f) {
+            player?.volume = fadeFromVolume
+            fadeFromVolume = -1f
+        }
         sleepAt = 0L
         if (sleepAtEnd) {
             sleepAtEnd = false

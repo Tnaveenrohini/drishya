@@ -9,7 +9,9 @@ import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.content.res.Configuration
+import android.graphics.Bitmap
 import android.graphics.Typeface
+import android.media.MediaMetadataRetriever
 import android.media.AudioManager
 import android.media.MediaScannerConnection
 import android.net.Uri
@@ -76,6 +78,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.io.File
 import java.util.Locale
+import java.util.concurrent.Executors
 import kotlin.math.abs
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -123,6 +126,28 @@ class PlayerActivity : AppCompatActivity() {
     private lateinit var panelQueue: View
     private lateinit var queueList: RecyclerView
     private lateinit var audio: AudioManager
+    private lateinit var seekPreview: View
+    private lateinit var seekPreviewImg: ImageView
+    private lateinit var seekPreviewTime: TextView
+
+    // Seek preview thumbnails
+    private val thumbExec = Executors.newSingleThreadExecutor()
+    @Volatile private var retriever: MediaMetadataRetriever? = null
+    private var thumbBusy = false
+    @Volatile private var thumbWanted = -1L
+
+    // A-B repeat
+    private var abA = C.TIME_UNSET
+    private var abB = C.TIME_UNSET
+    private val abTick = object : Runnable {
+        override fun run() {
+            val p = player
+            if (p != null && abA != C.TIME_UNSET && abB != C.TIME_UNSET && p.currentPosition >= abB) {
+                p.seekTo(abA)
+            }
+            if (abB != C.TIME_UNSET) handler.postDelayed(this, 150)
+        }
+    }
 
     // ---- state
     private var player: ExoPlayer? = null
@@ -227,6 +252,9 @@ class PlayerActivity : AppCompatActivity() {
         panelSettingsContent = findViewById(R.id.panel_settings_content)
         panelQueue = findViewById(R.id.panel_queue)
         queueList = findViewById(R.id.queue_list)
+        seekPreview = findViewById(R.id.seek_preview)
+        seekPreviewImg = findViewById(R.id.seek_preview_img)
+        seekPreviewTime = findViewById(R.id.seek_preview_time)
         queueList.layoutManager = LinearLayoutManager(this)
         audio = getSystemService(AUDIO_SERVICE) as AudioManager
 
@@ -269,14 +297,17 @@ class PlayerActivity : AppCompatActivity() {
             override fun onScrubStart(timeBar: TimeBar, position: Long) {
                 scrubbing = true
                 handler.removeCallbacks(autoHide)
+                startPreview(position)
             }
 
             override fun onScrubMove(timeBar: TimeBar, position: Long) {
                 posText.text = formatTime(position)
+                movePreview(position)
             }
 
             override fun onScrubStop(timeBar: TimeBar, position: Long, canceled: Boolean) {
                 scrubbing = false
+                stopPreview()
                 if (!canceled) player?.seekTo(position)
                 bumpHide()
             }
@@ -319,6 +350,7 @@ class PlayerActivity : AppCompatActivity() {
         savePosition()
         handler.removeCallbacks(saveTick)
         handler.removeCallbacks(progressTick)
+        handler.removeCallbacks(abTick)
         val p = player
         if (p != null) {
             val keep = (bgPlay || audioOnly || playingAudio()) && p.isPlaying
@@ -333,6 +365,10 @@ class PlayerActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         handler.removeCallbacksAndMessages(null)
+        val r = retriever
+        retriever = null
+        thumbExec.execute { try { r?.release() } catch (_: Exception) {} }
+        thumbExec.shutdown()
         if (isFinishing && !redirected) {
             PlayerHolder.peek()?.let {
                 it.stop()
@@ -447,6 +483,11 @@ class PlayerActivity : AppCompatActivity() {
         applyPending()
         p.currentMediaItem?.let { titleView.text = it.mediaMetadata.title }
         updatePlayIcon()
+        updateMarkers()
+        if (abB != C.TIME_UNSET) {
+            handler.removeCallbacks(abTick)
+            handler.post(abTick)
+        }
         handler.removeCallbacks(saveTick)
         handler.post(saveTick)
         handler.removeCallbacks(progressTick)
@@ -505,7 +546,12 @@ class PlayerActivity : AppCompatActivity() {
                     showHud(getString(R.string.resumed_from, formatTime(saved)), 1500)
                 }
             }
+            if (mediaItem?.mediaId != lastMediaId) {
+                clearAb(silent = true)
+                releaseRetriever()
+            }
             lastMediaId = mediaItem?.mediaId
+            updateMarkers()
             if (panelQueue.visibility == View.VISIBLE) fillQueue()
             if (playingAudio()) showControls()
         }
@@ -736,6 +782,12 @@ class PlayerActivity : AppCompatActivity() {
             },
             iconTile(R.drawable.ic_info, getString(R.string.info)) { showInfo() },
             iconTile(R.drawable.ic_cut, getString(R.string.trim)) { trimDialog() },
+            iconTile(R.drawable.ic_ab, getString(R.string.ab_repeat), active = abA != C.TIME_UNSET) {
+                abStep()
+                buildSettings()
+            },
+            iconTile(R.drawable.ic_bookmark, getString(R.string.add_bookmark)) { addBookmark() },
+            iconTile(R.drawable.ic_bookmarks, getString(R.string.bookmarks)) { bookmarksDialog() },
         )).forEach { c.addView(it) }
         c.addView(divider())
 
@@ -818,6 +870,163 @@ class PlayerActivity : AppCompatActivity() {
                 lock()
             },
         )).forEach { c.addView(it) }
+    }
+
+    // ================================================================ A-B repeat + bookmarks
+
+    private fun abStep() {
+        val p = player ?: return
+        when {
+            abA == C.TIME_UNSET -> {
+                abA = p.currentPosition
+                showHud(getString(R.string.ab_set_a, formatTime(abA)))
+            }
+            abB == C.TIME_UNSET -> {
+                val pos = p.currentPosition
+                if (pos <= abA + 500) {
+                    // B, A kanna mundu undakudadu
+                    abA = pos
+                    showHud(getString(R.string.ab_set_a, formatTime(abA)))
+                } else {
+                    abB = pos
+                    p.seekTo(abA)
+                    showHud(getString(R.string.ab_set_b, formatTime(abA), formatTime(abB)))
+                    handler.removeCallbacks(abTick)
+                    handler.post(abTick)
+                }
+            }
+            else -> clearAb(silent = false)
+        }
+        updateMarkers()
+    }
+
+    private fun clearAb(silent: Boolean) {
+        val had = abA != C.TIME_UNSET
+        abA = C.TIME_UNSET
+        abB = C.TIME_UNSET
+        handler.removeCallbacks(abTick)
+        if (had && !silent) showHud(getString(R.string.ab_cleared))
+        updateMarkers()
+    }
+
+    private fun currentId(): String? = player?.currentMediaItem?.mediaId
+
+    private fun addBookmark() {
+        val p = player ?: return
+        val id = currentId() ?: return
+        Bookmarks.add(this, id, p.currentPosition)
+        showHud(getString(R.string.bookmark_added, formatTime(p.currentPosition)))
+        updateMarkers()
+    }
+
+    private fun bookmarksDialog() {
+        val id = currentId() ?: return
+        val list = Bookmarks.list(this, id)
+        if (list.isEmpty()) {
+            showHud(getString(R.string.no_bookmarks))
+            return
+        }
+        val b = MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.bookmarks)
+            .setItems(list.map { formatTime(it) }.toTypedArray()) { _, which ->
+                player?.seekTo(list[which])
+                closePanels()
+            }
+            .setNegativeButton(R.string.bookmark_clear) { _, _ ->
+                Bookmarks.clear(this, id)
+                updateMarkers()
+            }
+            .setPositiveButton(android.R.string.cancel, null)
+        b.show()
+    }
+
+    /** Time bar meeda bookmark + A/B gurthulu. */
+    private fun updateMarkers() {
+        val id = currentId()
+        val marks = ArrayList<Long>()
+        if (id != null) marks += Bookmarks.list(this, id)
+        if (abA != C.TIME_UNSET) marks += abA
+        if (abB != C.TIME_UNSET) marks += abB
+        marks.sort()
+        timeBar.setAdGroupTimesMs(marks.toLongArray(), BooleanArray(marks.size), marks.size)
+    }
+
+    // ================================================================ seek preview
+
+    private fun previewUri(): Uri? {
+        val id = currentId() ?: return null
+        val u = Uri.parse(id)
+        if (playingAudio() || is360) return null
+        return if (u.scheme == "content" || u.scheme == "file" || u.scheme == null) u else null
+    }
+
+    private fun releaseRetriever() {
+        val r = retriever
+        retriever = null
+        thumbWanted = -1L
+        if (r != null && !thumbExec.isShutdown) thumbExec.execute { try { r.release() } catch (_: Exception) {} }
+    }
+
+    private fun startPreview(position: Long) {
+        val uri = previewUri()
+        seekPreviewImg.visibility = if (uri != null) View.VISIBLE else View.GONE
+        if (uri == null) seekPreviewImg.setImageDrawable(null)
+        seekPreview.visibility = View.VISIBLE
+        movePreview(position)
+    }
+
+    private fun movePreview(position: Long) {
+        seekPreviewTime.text = formatTime(position)
+        // Time bar meeda, thumb unna chota
+        val bar = IntArray(2)
+        val rootLoc = IntArray(2)
+        timeBar.getLocationInWindow(bar)
+        root.getLocationInWindow(rootLoc)
+        val dur = player?.duration?.takeIf { it > 0 && it != C.TIME_UNSET } ?: 1L
+        val frac = (position.toFloat() / dur).coerceIn(0f, 1f)
+        val w = if (seekPreview.width > 0) seekPreview.width else dp(168)
+        val h = if (seekPreview.height > 0) seekPreview.height else dp(120)
+        val x = bar[0] - rootLoc[0] + frac * timeBar.width - w / 2f
+        seekPreview.translationX = x.coerceIn(dp(8).toFloat(), (root.width - w - dp(8)).toFloat().coerceAtLeast(0f))
+        seekPreview.translationY = (bar[1] - rootLoc[1] - h - dp(10)).toFloat()
+        if (seekPreviewImg.visibility == View.VISIBLE) requestThumb(position)
+    }
+
+    private fun requestThumb(position: Long) {
+        thumbWanted = position
+        if (thumbBusy || thumbExec.isShutdown) return
+        val uri = previewUri() ?: return
+        thumbBusy = true
+        val ctx = applicationContext
+        thumbExec.execute {
+            var bmp: Bitmap? = null
+            val pos = thumbWanted
+            try {
+                val r = retriever ?: MediaMetadataRetriever().also {
+                    it.setDataSource(ctx, uri)
+                    retriever = it
+                }
+                val us = pos * 1000
+                bmp = if (Build.VERSION.SDK_INT >= 27) {
+                    r.getScaledFrameAtTime(us, MediaMetadataRetriever.OPTION_CLOSEST_SYNC, 320, 180)
+                } else {
+                    r.getFrameAtTime(us, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+                }
+            } catch (_: Exception) {
+            }
+            handler.post {
+                thumbBusy = false
+                if (isDestroyed) return@post
+                if (bmp != null && seekPreview.visibility == View.VISIBLE) seekPreviewImg.setImageBitmap(bmp)
+                // Kotha position adigithe malli teeyi
+                if (scrubbing && thumbWanted != pos && thumbWanted >= 0) requestThumb(thumbWanted)
+            }
+        }
+    }
+
+    private fun stopPreview() {
+        seekPreview.visibility = View.GONE
+        thumbWanted = -1L
     }
 
     // ================================================================ panel actions

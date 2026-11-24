@@ -248,3 +248,63 @@ fun formatSize(bytes: Long): String = when {
     bytes >= 1L shl 20 -> String.format(Locale.US, "%.0f MB", bytes / (1L shl 20).toDouble())
     else -> String.format(Locale.US, "%.0f KB", bytes / 1024.0)
 }
+
+
+/** Video lo important time marks (prathi video ki veru). */
+object Bookmarks {
+    private fun prefs(c: Context) = c.getSharedPreferences("bookmarks", Context.MODE_PRIVATE)
+
+    fun list(c: Context, id: String): List<Long> {
+        val raw = prefs(c).getString(id, null) ?: return emptyList()
+        return try {
+            val a = JSONArray(raw)
+            (0 until a.length()).map { a.getLong(it) }.sorted()
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    private fun save(c: Context, id: String, list: List<Long>) {
+        val e = prefs(c).edit()
+        if (list.isEmpty()) e.remove(id) else e.putString(id, JSONArray(list.sorted()).toString())
+        e.apply()
+    }
+
+    fun add(c: Context, id: String, ms: Long) {
+        val l = list(c, id).toMutableList()
+        if (l.none { kotlin.math.abs(it - ms) < 1000 }) l += ms
+        save(c, id, l)
+    }
+
+    fun remove(c: Context, id: String, ms: Long) = save(c, id, list(c, id).filter { it != ms })
+
+    fun clear(c: Context, id: String) = save(c, id, emptyList())
+}
+
+/** Private folder: ee videos Flikk Play lo PIN tho matrame kanipistayi. */
+object Privacy {
+    private fun prefs(c: Context) = c.getSharedPreferences("private", Context.MODE_PRIVATE)
+
+    fun all(c: Context): Set<String> = prefs(c).getStringSet("uris", emptySet()) ?: emptySet()
+
+    fun isPrivate(c: Context, uri: String) = uri in all(c)
+
+    fun add(c: Context, uris: Collection<String>) {
+        prefs(c).edit().putStringSet("uris", HashSet(all(c) + uris)).apply()
+    }
+
+    fun remove(c: Context, uri: String) {
+        prefs(c).edit().putStringSet("uris", HashSet(all(c) - uri)).apply()
+    }
+
+    private fun hash(pin: String): String {
+        val md = java.security.MessageDigest.getInstance("SHA-256")
+        return md.digest("flikk:$pin".toByteArray()).joinToString("") { "%02x".format(it) }
+    }
+
+    fun hasPin(c: Context) = prefs(c).getString("pin", null) != null
+
+    fun setPin(c: Context, pin: String) = prefs(c).edit().putString("pin", hash(pin)).apply()
+
+    fun checkPin(c: Context, pin: String) = prefs(c).getString("pin", null) == hash(pin)
+}
