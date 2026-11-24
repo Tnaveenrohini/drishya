@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">Flikk</string>
-    <string name="brand" translatable="false">FLIKK</string>
+    <string name="app_name" translatable="false">Flikk Play</string>
+    <string name="brand" translatable="false">FLIKK PLAY</string>
 
     <string name="title_videos">Videos</string>
     <string name="tab_all">All</string>
@@ -138,7 +138,7 @@
     <string name="share">Share</string>
     <string name="add_to">Add to</string>
     <string name="new_badge">New</string>
-    <string name="about">About Flikk</string>
+    <string name="about">About Flikk Play</string>
     <string name="version">Version %s · Made in India</string>
     <string name="playback_settings">Playback settings</string>
     <string name="playback_mode">Playback mode</string>
