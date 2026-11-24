@@ -13,8 +13,8 @@ android {
         applicationId = "com.flikk.player"
         minSdk = 26
         targetSdk = 34
-        versionCode = 12
-        versionName = "2.0"
+        versionCode = 13
+        versionName = "2.1"
     }
 
     // Fixed key: prathi kotha build paata app meedha update ga install avthundi.

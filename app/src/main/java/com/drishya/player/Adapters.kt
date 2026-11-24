@@ -239,3 +239,146 @@ class ContinueAdapter(
         h.card.setOnClickListener { onClick() }
     }
 }
+
+// ---------------------------------------------------------------- Home: chips + shelves
+
+/** Home lo filter chips: All · Movies · WhatsApp · Camera … */
+class ChipsAdapter(
+    private val labels: List<String>,
+    private val selected: Int,
+    private val onPick: (Int) -> Unit,
+) : RecyclerView.Adapter<ChipsAdapter.VH>() {
+    class VH(v: View) : RecyclerView.ViewHolder(v) {
+        val row: android.widget.LinearLayout = v.findViewById(R.id.chips_row)
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
+        VH(LayoutInflater.from(parent.context).inflate(R.layout.item_chips, parent, false))
+
+    override fun getItemCount() = 1
+
+    override fun onBindViewHolder(h: VH, position: Int) {
+        val c = h.itemView.context
+        val d = c.resources.displayMetrics.density
+        h.row.removeAllViews()
+        labels.forEachIndexed { i, label ->
+            val on = i == selected
+            val chip = TextView(c)
+            chip.text = label
+            chip.textSize = 13f
+            chip.gravity = android.view.Gravity.CENTER
+            chip.setTypeface(null, if (on) Typeface.BOLD else Typeface.NORMAL)
+            chip.setTextColor(if (on) 0xFF000000.toInt() else 0xFFFFFFFF.toInt())
+            chip.setBackgroundResource(if (on) R.drawable.bg_chip_on else R.drawable.bg_chip_off)
+            chip.setPadding((16 * d).toInt(), 0, (16 * d).toInt(), 0)
+            chip.minWidth = (56 * d).toInt()
+            chip.isClickable = true
+            chip.setOnClickListener { onPick(i) }
+            val lp = android.widget.LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, (38 * d).toInt())
+            lp.marginEnd = (8 * d).toInt()
+            h.row.addView(chip, lp)
+        }
+    }
+}
+
+/** Okka horizontal shelf: title + See all + cards. */
+class ShelfAdapter(
+    private val title: String,
+    private val videos: List<Video>,
+    private val resume: SharedPreferences,
+    private val portrait: Boolean,
+    private val isNew: (Video) -> Boolean,
+    private val onSeeAll: (() -> Unit)?,
+    private val onClick: (Int) -> Unit,
+    private val onLongClick: (Int) -> Unit,
+) : RecyclerView.Adapter<ShelfAdapter.VH>() {
+    class VH(v: View) : RecyclerView.ViewHolder(v) {
+        val title: TextView = v.findViewById(R.id.shelf_title)
+        val more: TextView = v.findViewById(R.id.shelf_more)
+        val list: RecyclerView = v.findViewById(R.id.shelf_list)
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+        val vh = VH(LayoutInflater.from(parent.context).inflate(R.layout.item_shelf, parent, false))
+        vh.list.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(
+            parent.context, androidx.recyclerview.widget.LinearLayoutManager.HORIZONTAL, false
+        )
+        return vh
+    }
+
+    override fun getItemCount() = 1
+
+    override fun onBindViewHolder(h: VH, position: Int) {
+        h.title.text = title
+        h.more.visibility = if (onSeeAll != null) View.VISIBLE else View.GONE
+        h.more.setOnClickListener { onSeeAll?.invoke() }
+        h.list.adapter = CardAdapter()
+    }
+
+    private inner class CardAdapter : RecyclerView.Adapter<CardAdapter.CH>() {
+        inner class CH(v: View) : RecyclerView.ViewHolder(v) {
+            val box: View = v.findViewById(R.id.sc_box)
+            val thumb: ImageView = v.findViewById(R.id.sc_thumb)
+            val badge: View = v.findViewById(R.id.sc_new)
+            val dur: TextView = v.findViewById(R.id.sc_dur)
+            val track: View = v.findViewById(R.id.sc_track)
+            val prog: View = v.findViewById(R.id.sc_prog)
+            val name: TextView = v.findViewById(R.id.sc_name)
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CH {
+            val v = LayoutInflater.from(parent.context).inflate(R.layout.item_shelf_card, parent, false)
+            val d = parent.resources.displayMetrics.density
+            if (portrait) {
+                v.layoutParams = v.layoutParams.apply { width = (112 * d).toInt() }
+                v.findViewById<View>(R.id.sc_box).layoutParams.height = (156 * d).toInt()
+            }
+            val ch = CH(v)
+            ch.box.clipToOutline = true
+            return ch
+        }
+
+        override fun getItemCount() = videos.size
+
+        override fun onBindViewHolder(h: CH, position: Int) {
+            val v = videos[position]
+            h.name.text = v.name
+            h.dur.text = formatTime(v.durationMs)
+            h.badge.visibility = if (isNew(v)) View.VISIBLE else View.GONE
+            val saved = resume.getLong(v.uri.toString(), 0L)
+            if (saved > 5000 && v.durationMs > 0) {
+                h.track.visibility = View.VISIBLE
+                h.prog.visibility = View.VISIBLE
+                h.prog.pivotX = 0f
+                h.prog.scaleX = (saved.toFloat() / v.durationMs).coerceIn(0.02f, 1f)
+            } else {
+                h.track.visibility = View.GONE
+                h.prog.visibility = View.GONE
+            }
+            Glide.with(h.thumb).load(v.uri).centerCrop().into(h.thumb)
+            h.itemView.setOnClickListener {
+                val p = h.bindingAdapterPosition
+                if (p != RecyclerView.NO_POSITION) onClick(p)
+            }
+            h.itemView.setOnLongClickListener {
+                val p = h.bindingAdapterPosition
+                if (p != RecyclerView.NO_POSITION) onLongClick(p)
+                true
+            }
+        }
+    }
+}
+
+/** List lo chinna section heading ("All videos"). */
+class SectionTitleAdapter(private val title: String) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
+        object : RecyclerView.ViewHolder(
+            LayoutInflater.from(parent.context).inflate(R.layout.item_section_title, parent, false)
+        ) {}
+
+    override fun getItemCount() = 1
+
+    override fun onBindViewHolder(h: RecyclerView.ViewHolder, position: Int) {
+        (h.itemView as TextView).text = title
+    }
+}

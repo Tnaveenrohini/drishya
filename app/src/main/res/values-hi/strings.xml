@@ -203,4 +203,14 @@
     <string name="fp_cast_no_wifi">फ़ोन और TV एक ही Wi-Fi पर हों</string>
     <string name="time_left">%1$s बाकी</string>
     <string name="vinyl_mode">विनाइल स्पिन</string>
+    <string name="chip_all">सभी</string>
+    <string name="chip_movies">फ़िल्में</string>
+    <string name="chip_whatsapp">WhatsApp</string>
+    <string name="chip_camera">कैमरा</string>
+    <string name="chip_downloads">डाउनलोड</string>
+    <string name="chip_short">छोटे क्लिप</string>
+    <string name="shelf_recent">हाल ही में जोड़े गए</string>
+    <string name="shelf_movies">फ़िल्में · 1 घंटा+</string>
+    <string name="all_videos">सभी वीडियो</string>
+    <string name="see_all">सब देखें</string>
 </resources>

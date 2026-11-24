@@ -224,4 +224,14 @@
     <string name="fp_cast_no_wifi">Connect phone and TV to the same Wi-Fi</string>
     <string name="time_left">%1$s left</string>
     <string name="vinyl_mode">Vinyl spin</string>
+    <string name="chip_all">All</string>
+    <string name="chip_movies">Movies</string>
+    <string name="chip_whatsapp">WhatsApp</string>
+    <string name="chip_camera">Camera</string>
+    <string name="chip_downloads">Downloads</string>
+    <string name="chip_short">Short clips</string>
+    <string name="shelf_recent">Recently added</string>
+    <string name="shelf_movies">Movies · 1 hr+</string>
+    <string name="all_videos">All videos</string>
+    <string name="see_all">See all</string>
 </resources>

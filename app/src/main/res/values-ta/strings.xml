@@ -203,4 +203,14 @@
     <string name="fp_cast_no_wifi">போனும் TV-யும் ஒரே Wi-Fi-இல் இருக்க வேண்டும்</string>
     <string name="time_left">%1$s மீதம்</string>
     <string name="vinyl_mode">வினைல் சுழற்சி</string>
+    <string name="chip_all">அனைத்தும்</string>
+    <string name="chip_movies">திரைப்படங்கள்</string>
+    <string name="chip_whatsapp">WhatsApp</string>
+    <string name="chip_camera">கேமரா</string>
+    <string name="chip_downloads">பதிவிறக்கங்கள்</string>
+    <string name="chip_short">சிறு கிளிப்புகள்</string>
+    <string name="shelf_recent">சமீபத்தில் சேர்க்கப்பட்டவை</string>
+    <string name="shelf_movies">திரைப்படங்கள் · 1 மணி+</string>
+    <string name="all_videos">அனைத்து வீடியோக்கள்</string>
+    <string name="see_all">அனைத்தும் பார்</string>
 </resources>

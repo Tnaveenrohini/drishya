@@ -514,29 +514,87 @@ class MainActivity : AppCompatActivity() {
                     showVideos(r, q)
                 }
             }
-            else -> {
-                showVideos(sorted(allVideos), q)
-                if (showContinue) addContinueCard()
+            else -> if (showContinue) showHome() else showVideos(sorted(allVideos), q)
+        }
+    }
+
+    // ------------------------------------------------------------ Home: hero + chips + shelves
+
+    private var homeChip = 0   // index into homeChips()
+
+    private enum class Cat { ALL, MOVIES, WHATSAPP, CAMERA, DOWNLOADS, SHORT }
+
+    private fun inCat(v: Video, c: Cat): Boolean = when (c) {
+        Cat.ALL -> true
+        Cat.MOVIES -> v.durationMs >= 60 * 60_000L
+        Cat.WHATSAPP -> v.folder.contains("whatsapp", true)
+        Cat.CAMERA -> v.folder.equals("camera", true) || v.folder.equals("dcim", true)
+        Cat.DOWNLOADS -> v.folder.contains("download", true)
+        Cat.SHORT -> v.durationMs in 1 until 60_000L
+    }
+
+    private fun catLabel(c: Cat) = getString(
+        when (c) {
+            Cat.ALL -> R.string.chip_all
+            Cat.MOVIES -> R.string.chip_movies
+            Cat.WHATSAPP -> R.string.chip_whatsapp
+            Cat.CAMERA -> R.string.chip_camera
+            Cat.DOWNLOADS -> R.string.chip_downloads
+            Cat.SHORT -> R.string.chip_short
+        }
+    )
+
+    /** Videos unna categories matrame chips ga. */
+    private fun homeChips(): List<Cat> =
+        Cat.values().filter { c -> c == Cat.ALL || allVideos.any { inCat(it, c) } }
+
+    private fun showHome() {
+        val chips = homeChips()
+        if (homeChip !in chips.indices) homeChip = 0
+        val cat = chips[homeChip]
+        val all = sorted(allVideos)
+        showVideos(all.filter { inCat(it, cat) }, "")
+        val rows = recycler.adapter ?: return
+        val parts = ArrayList<RecyclerView.Adapter<out RecyclerView.ViewHolder>>()
+        lastUnfinished()?.let { v ->
+            val saved = resumePrefs.getLong(v.uri.toString(), 0L)
+            val left = (v.durationMs - saved).coerceAtLeast(0L)
+            val sub = if (v.durationMs > 0) getString(R.string.time_left, formatTime(left))
+            else getString(R.string.paused_at, formatTime(saved))
+            parts += ContinueAdapter(v, saved, sub) { openPlayer(listOf(v), 0) }
+        }
+        if (chips.size > 1) {
+            parts += ChipsAdapter(chips.map { catLabel(it) }, homeChip) { i ->
+                homeChip = i
+                render()
             }
         }
+        if (cat == Cat.ALL) {
+            fun shelf(title: String, list: List<Video>, portrait: Boolean, seeAll: Cat?) {
+                if (list.size < 2) return
+                val shown = list.take(15)
+                parts += ShelfAdapter(
+                    title, shown, resumePrefs, portrait,
+                    isNew = { isNew(it) },
+                    onSeeAll = seeAll?.let { c -> { homeChip = chips.indexOf(c); render() } },
+                    onClick = { i -> openPlayer(shown, i) },
+                    onLongClick = { i -> videoMenu(shown[i]) },
+                )
+            }
+            shelf(getString(R.string.shelf_recent), allVideos.sortedByDescending { it.dateAdded }, false, null)
+            shelf(getString(R.string.shelf_movies), all.filter { inCat(it, Cat.MOVIES) }, true, Cat.MOVIES)
+            shelf(getString(R.string.chip_whatsapp), all.filter { inCat(it, Cat.WHATSAPP) }, false, Cat.WHATSAPP)
+            shelf(getString(R.string.chip_camera), all.filter { inCat(it, Cat.CAMERA) }, false, Cat.CAMERA)
+            parts += SectionTitleAdapter(getString(R.string.all_videos))
+        }
+        parts += rows
+        recycler.adapter = androidx.recyclerview.widget.ConcatAdapter(parts)
+        bigTitle.text = getString(R.string.app_name)
+        subTitle.text = getString(R.string.count_summary, allVideos.size, allVideos.map { it.folder }.distinct().size)
     }
 
     private fun lastUnfinished(): Video? = Library.recent(this, allVideos)
         .firstOrNull { resumePrefs.getLong(it.uri.toString(), 0L) > 5000 }
-
-    /** Videos tab paina pedda Continue watching card. */
-    private fun addContinueCard() {
-        val v = lastUnfinished() ?: return
-        val saved = resumePrefs.getLong(v.uri.toString(), 0L)
-        val left = (v.durationMs - saved).coerceAtLeast(0L)
-        val sub = if (v.durationMs > 0) getString(R.string.time_left, formatTime(left))
-        else getString(R.string.paused_at, formatTime(saved))
-        val rows = recycler.adapter ?: return
-        recycler.adapter = androidx.recyclerview.widget.ConcatAdapter(
-            ContinueAdapter(v, saved, sub) { openPlayer(listOf(v), 0) },
-            rows,
-        )
-    }
 
     private fun isNew(v: Video): Boolean {
         val key = v.uri.toString()

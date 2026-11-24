@@ -217,4 +217,14 @@
     <string name="fp_cast_no_wifi">ఫోన్, TV ఒకే Wi-Fi లో ఉండాలి</string>
     <string name="time_left">%1$s మిగిలింది</string>
     <string name="vinyl_mode">వినైల్ స్పిన్</string>
+    <string name="chip_all">అన్నీ</string>
+    <string name="chip_movies">సినిమాలు</string>
+    <string name="chip_whatsapp">WhatsApp</string>
+    <string name="chip_camera">కెమెరా</string>
+    <string name="chip_downloads">డౌన్‌లోడ్స్</string>
+    <string name="chip_short">చిన్న క్లిప్స్</string>
+    <string name="shelf_recent">కొత్తగా వచ్చినవి</string>
+    <string name="shelf_movies">సినిమాలు · 1 గం+</string>
+    <string name="all_videos">అన్ని వీడియోలు</string>
+    <string name="see_all">అన్నీ చూడు</string>
 </resources>
