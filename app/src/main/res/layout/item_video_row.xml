@@ -50,6 +50,14 @@
             android:textStyle="bold" />
 
         <View
+            android:id="@+id/resume_track"
+            android:layout_width="match_parent"
+            android:layout_height="3dp"
+            android:layout_gravity="bottom"
+            android:background="#4DFFFFFF"
+            android:visibility="gone" />
+
+        <View
             android:id="@+id/resume_bar"
             android:layout_width="match_parent"
             android:layout_height="3dp"

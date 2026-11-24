@@ -300,8 +300,11 @@ class PlayerActivity : AppCompatActivity() {
         val pad = dp(8)
         ViewCompat.setOnApplyWindowInsetsListener(controls) { _, insets ->
             val c = insets.getInsets(WindowInsetsCompat.Type.displayCutout())
-            topBar.setPadding(pad + c.left, pad + c.top, pad + c.right, pad)
-            bottomBox.setPadding(pad * 2 + c.left, bottomBox.paddingTop, pad * 2 + c.right, pad + c.bottom)
+            topBar.setPadding(pad + c.left, pad + c.top, pad + c.right, pad * 3)
+            (bottomBox.layoutParams as ViewGroup.MarginLayoutParams).let { lp ->
+                lp.setMargins(dp(12) + c.left, 0, dp(12) + c.right, dp(12) + c.bottom)
+                bottomBox.layoutParams = lp
+            }
             insets
         }
 

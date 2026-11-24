@@ -222,4 +222,6 @@
     <string name="fp_cast_failed">Couldn\'t connect to TV</string>
     <string name="fp_cast_unsupported">This video can\'t be cast</string>
     <string name="fp_cast_no_wifi">Connect phone and TV to the same Wi-Fi</string>
+    <string name="time_left">%1$s left</string>
+    <string name="vinyl_mode">Vinyl spin</string>
 </resources>

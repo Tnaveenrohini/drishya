@@ -130,6 +130,7 @@
                 android:paddingBottom="12dp">
 
                 <com.drishya.player.SquareFrameLayout
+                    android:id="@+id/vinyl_box"
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_gravity="center_horizontal"
@@ -143,6 +144,24 @@
                         android:contentDescription="@null"
                         android:elevation="12dp"
                         android:scaleType="centerCrop" />
+
+                    <ImageView
+                        android:id="@+id/vinyl_rings"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:contentDescription="@null"
+                        android:elevation="12dp"
+                        android:src="@drawable/bg_vinyl"
+                        android:visibility="gone" />
+
+                    <View
+                        android:id="@+id/vinyl_hole"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/bg_vinyl_hole"
+                        android:elevation="13dp"
+                        android:visibility="gone" />
                 </com.drishya.player.SquareFrameLayout>
 
                 <TextView

@@ -5,4 +5,5 @@
     <item android:id="@+id/mm_boost" android:title="@string/volume_boost" />
     <item android:id="@+id/mm_speed" android:title="@string/playback_speed" />
     <item android:id="@+id/mm_share" android:title="@string/share" />
+    <item android:id="@+id/mm_vinyl" android:checkable="true" android:title="@string/vinyl_mode" />
 </menu>

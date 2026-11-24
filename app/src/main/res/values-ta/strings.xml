@@ -201,4 +201,6 @@
     <string name="fp_cast_failed">TV-உடன் இணைக்க முடியவில்லை</string>
     <string name="fp_cast_unsupported">இந்த வீடியோவை காஸ்ட் செய்ய முடியாது</string>
     <string name="fp_cast_no_wifi">போனும் TV-யும் ஒரே Wi-Fi-இல் இருக்க வேண்டும்</string>
+    <string name="time_left">%1$s மீதம்</string>
+    <string name="vinyl_mode">வினைல் சுழற்சி</string>
 </resources>

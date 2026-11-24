@@ -36,6 +36,7 @@ class VideoRowAdapter(
         val badge: TextView = v.findViewById(R.id.badge)
         val duration: TextView = v.findViewById(R.id.duration)
         val bar: View = v.findViewById(R.id.resume_bar)
+        val track: View = v.findViewById(R.id.resume_track)
         val name: TextView = v.findViewById(R.id.video_name)
         val meta: TextView = v.findViewById(R.id.video_meta)
         val more: ImageButton = v.findViewById(R.id.item_more)
@@ -63,8 +64,10 @@ class VideoRowAdapter(
             h.bar.visibility = View.VISIBLE
             h.bar.pivotX = 0f
             h.bar.scaleX = (saved.toFloat() / v.durationMs).coerceIn(0.02f, 1f)
+            h.track.visibility = View.VISIBLE
         } else {
             h.bar.visibility = View.GONE
+            h.track.visibility = View.GONE
         }
         Glide.with(h.thumb).load(v.uri).centerCrop().placeholder(R.drawable.bg_thumb).into(h.thumb)
 
@@ -186,5 +189,53 @@ class SquareFrameLayout @JvmOverloads constructor(
         size = minOf(size, max)
         val spec = MeasureSpec.makeMeasureSpec(size, MeasureSpec.EXACTLY)
         super.onMeasure(spec, spec)
+    }
+}
+
+
+/** 16:9 box (Continue watching card kosam). */
+class WideFrameLayout @JvmOverloads constructor(
+    context: android.content.Context,
+    attrs: android.util.AttributeSet? = null,
+) : android.widget.FrameLayout(context, attrs) {
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        val w = View.MeasureSpec.getSize(widthMeasureSpec)
+        super.onMeasure(
+            widthMeasureSpec,
+            View.MeasureSpec.makeMeasureSpec(w * 9 / 16, View.MeasureSpec.EXACTLY),
+        )
+    }
+}
+
+/** Videos list paina pedda "Continue watching" card. */
+class ContinueAdapter(
+    private val video: Video,
+    private val savedMs: Long,
+    private val sub: String,
+    private val onClick: () -> Unit,
+) : RecyclerView.Adapter<ContinueAdapter.VH>() {
+    class VH(v: View) : RecyclerView.ViewHolder(v) {
+        val card: View = v.findViewById(R.id.cw_card)
+        val thumb: ImageView = v.findViewById(R.id.cw_thumb)
+        val title: TextView = v.findViewById(R.id.cw_title)
+        val sub: TextView = v.findViewById(R.id.cw_sub)
+        val progress: View = v.findViewById(R.id.cw_progress)
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+        val vh = VH(LayoutInflater.from(parent.context).inflate(R.layout.item_continue, parent, false))
+        vh.card.clipToOutline = true
+        return vh
+    }
+
+    override fun getItemCount() = 1
+
+    override fun onBindViewHolder(h: VH, position: Int) {
+        h.title.text = video.name
+        h.sub.text = sub
+        h.progress.pivotX = 0f
+        h.progress.scaleX = if (video.durationMs > 0) (savedMs.toFloat() / video.durationMs).coerceIn(0.02f, 1f) else 0f
+        Glide.with(h.thumb).load(video.uri).centerCrop().into(h.thumb)
+        h.card.setOnClickListener { onClick() }
     }
 }

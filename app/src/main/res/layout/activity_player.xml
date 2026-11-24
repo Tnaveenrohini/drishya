@@ -36,6 +36,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="top"
             android:background="@drawable/top_scrim"
+            android:paddingBottom="24dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:padding="8dp">
@@ -102,11 +103,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
-            android:background="@drawable/bottom_scrim"
+            android:layout_margin="12dp"
+            android:background="@drawable/bg_glass"
+            android:elevation="4dp"
             android:orientation="vertical"
             android:paddingHorizontal="16dp"
-            android:paddingTop="28dp"
-            android:paddingBottom="10dp">
+            android:paddingTop="8dp"
+            android:paddingBottom="6dp">
 
             <LinearLayout
                 android:layout_width="match_parent"

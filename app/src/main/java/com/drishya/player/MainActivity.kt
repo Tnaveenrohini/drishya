@@ -480,7 +480,8 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        updateMiniBar(inside || selecting)
+        val showContinue = !inside && !selecting && tab == 0 && query.isBlank()
+        updateMiniBar(inside || selecting || showContinue)
         if (allVideos.isEmpty()) {
             subTitle.text = ""
             showEmpty(getString(R.string.no_videos), showButton = false)
@@ -513,8 +514,28 @@ class MainActivity : AppCompatActivity() {
                     showVideos(r, q)
                 }
             }
-            else -> showVideos(sorted(allVideos), q)
+            else -> {
+                showVideos(sorted(allVideos), q)
+                if (showContinue) addContinueCard()
+            }
         }
+    }
+
+    private fun lastUnfinished(): Video? = Library.recent(this, allVideos)
+        .firstOrNull { resumePrefs.getLong(it.uri.toString(), 0L) > 5000 }
+
+    /** Videos tab paina pedda Continue watching card. */
+    private fun addContinueCard() {
+        val v = lastUnfinished() ?: return
+        val saved = resumePrefs.getLong(v.uri.toString(), 0L)
+        val left = (v.durationMs - saved).coerceAtLeast(0L)
+        val sub = if (v.durationMs > 0) getString(R.string.time_left, formatTime(left))
+        else getString(R.string.paused_at, formatTime(saved))
+        val rows = recycler.adapter ?: return
+        recycler.adapter = androidx.recyclerview.widget.ConcatAdapter(
+            ContinueAdapter(v, saved, sub) { openPlayer(listOf(v), 0) },
+            rows,
+        )
     }
 
     private fun isNew(v: Video): Boolean {
@@ -576,8 +597,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateMiniBar(hide: Boolean) {
-        val last = if (hide) null else Library.recent(this, allVideos)
-            .firstOrNull { resumePrefs.getLong(it.uri.toString(), 0L) > 5000 }
+        val last = if (hide) null else lastUnfinished()
         if (last == null) {
             miniBar.visibility = View.GONE
             return

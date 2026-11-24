@@ -47,6 +47,11 @@ class MusicActivity : AppCompatActivity() {
     private lateinit var bgArt: ImageView
     private lateinit var smallArt: ImageView
     private lateinit var bigArt: ImageView
+    private lateinit var vinylBox: View
+    private lateinit var vinylRings: View
+    private lateinit var vinylHole: View
+    private var spin: android.animation.ObjectAnimator? = null
+    private val vinylPrefs by lazy { getSharedPreferences(Prefs.SETTINGS, MODE_PRIVATE) }
     private lateinit var title: TextView
     private lateinit var artist: TextView
     private lateinit var bigTitle: TextView
@@ -103,6 +108,10 @@ class MusicActivity : AppCompatActivity() {
         repeatBtn = findViewById(R.id.m_repeat)
         list.layoutManager = LinearLayoutManager(this)
         bigArt.clipToOutline = true
+        vinylBox = findViewById(R.id.vinyl_box)
+        vinylRings = findViewById(R.id.vinyl_rings)
+        vinylHole = findViewById(R.id.vinyl_hole)
+        applyVinyl()
         smallArt.clipToOutline = true
         title.isSelected = true   // marquee
         artist.isSelected = true
@@ -183,11 +192,13 @@ class MusicActivity : AppCompatActivity() {
         attach()
         handler.removeCallbacks(tick)
         handler.post(tick)
+        updateSpin()
     }
 
     override fun onStop() {
         super.onStop()
         handler.removeCallbacks(tick)
+        spin?.pause()
         // Music: activity close ayina vinipistune untundi (notification lo controls)
         player?.removeListener(listener)
         player = null
@@ -239,6 +250,7 @@ class MusicActivity : AppCompatActivity() {
         override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) = refreshNowPlaying()
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             updatePlayIcon()
+            updateSpin()
             list.adapter?.notifyDataSetChanged()
         }
         override fun onPlaybackStateChanged(playbackState: Int) = updateProgress()
@@ -291,6 +303,47 @@ class MusicActivity : AppCompatActivity() {
     }
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
+
+    // ---------------------------------------------------------------- vinyl spin
+
+    private fun vinylOn() = vinylPrefs.getBoolean("vinyl", true)
+
+    private val roundOutline = object : android.view.ViewOutlineProvider() {
+        override fun getOutline(view: View, outline: android.graphics.Outline) {
+            outline.setOval(0, 0, view.width, view.height)
+        }
+    }
+
+    private fun applyVinyl() {
+        val on = vinylOn()
+        bigArt.outlineProvider = if (on) roundOutline else android.view.ViewOutlineProvider.BACKGROUND
+        bigArt.invalidateOutline()
+        vinylRings.visibility = if (on) View.VISIBLE else View.GONE
+        vinylHole.visibility = if (on) View.VISIBLE else View.GONE
+        if (!on) {
+            spin?.cancel()
+            spin = null
+            vinylBox.rotation = 0f
+        }
+        updateSpin()
+    }
+
+    /** Paata play avuthunte record thirugutundi, pause chesthe aagutundi. */
+    private fun updateSpin() {
+        if (!vinylOn()) return
+        val playing = player?.isPlaying == true
+        val a = spin ?: android.animation.ObjectAnimator.ofFloat(vinylBox, View.ROTATION, 0f, 360f).apply {
+            duration = 16_000L
+            repeatCount = android.animation.ValueAnimator.INFINITE
+            interpolator = android.view.animation.LinearInterpolator()
+            spin = this
+        }
+        when {
+            playing && !a.isStarted -> a.start()
+            playing && a.isPaused -> a.resume()
+            !playing && a.isRunning -> a.pause()
+        }
+    }
 
     private fun setArt(view: ImageView, bmp: Bitmap?, placeholderPad: Int) {
         if (bmp != null) {
@@ -503,8 +556,13 @@ class MusicActivity : AppCompatActivity() {
     private fun showMore(anchor: View) {
         PopupMenu(this, anchor).apply {
             menuInflater.inflate(R.menu.music_more, menu)
+            menu.findItem(R.id.mm_vinyl)?.isChecked = vinylOn()
             setOnMenuItemClickListener {
                 when (it.itemId) {
+                    R.id.mm_vinyl -> {
+                        vinylPrefs.edit().putBoolean("vinyl", !vinylOn()).apply()
+                        applyVinyl()
+                    }
                     R.id.mm_sleep -> sleepDialog()
                     R.id.mm_eq -> eqDialog()
                     R.id.mm_boost -> boostDialog()
