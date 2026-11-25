@@ -578,7 +578,7 @@ class MainActivity : AppCompatActivity() {
                 val first = if (continuing && v.durationMs > 0)
                     getString(R.string.time_left, formatTime((v.durationMs - saved).coerceAtLeast(0L)))
                 else formatTime(v.durationMs)
-                listOf(first, v.quality, android.text.format.Formatter.formatShortFileSize(this, v.sizeBytes))
+                listOf(first, v.quality.orEmpty(), android.text.format.Formatter.formatShortFileSize(this, v.sizeBytes))
                     .filter { it.isNotBlank() }.joinToString(" · ")
             },
             buttonText = getString(if (continuing) R.string.resume else R.string.play),
@@ -632,7 +632,7 @@ class MainActivity : AppCompatActivity() {
             getString(R.string.info_file) to v.name,
             getString(R.string.info_duration) to formatTime(v.durationMs),
             getString(R.string.info_size) to android.text.format.Formatter.formatFileSize(this, v.sizeBytes),
-            getString(R.string.info_resolution) to v.quality,
+            getString(R.string.info_resolution) to v.quality.orEmpty(),
             getString(R.string.info_location) to v.folder,
             getString(R.string.info_added) to java.text.DateFormat.getDateInstance()
                 .format(java.util.Date(v.dateAdded * 1000)),
