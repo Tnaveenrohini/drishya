@@ -31,14 +31,17 @@ jobs:
           path: app/build/outputs/apk/release/*.apk
 
       - name: Rename APK
-        run: cp app/build/outputs/apk/release/app-release.apk FlikkPlay.apk
+        run: |
+          cp app/build/outputs/apk/release/app-release.apk FlikkPlay.apk
+          VER=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          echo "APP_VERSION=$VER" >> "$GITHUB_ENV"
 
       - name: Publish release
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.${{ github.run_number }}
-          name: Flikk Play v1.${{ github.run_number }}
+          tag_name: v${{ env.APP_VERSION }}
+          name: Flikk Play v${{ env.APP_VERSION }}
           body: "Flikk Play — Made in India video player 🇮🇳. Kinda unna FlikkPlay.apk download chesi install cheyyandi."
           files: FlikkPlay.apk
           make_latest: "true"
