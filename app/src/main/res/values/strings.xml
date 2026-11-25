@@ -241,4 +241,20 @@
     <string name="now_playing_caps">NOW PLAYING</string>
     <string name="track_of">Track %1$d of %2$d · %3$s total</string>
     <string name="close">Close</string>
+    <string name="section_sound">Sound</string>
+    <string name="section_subtitles">Subtitles</string>
+    <string name="section_video">Video</string>
+    <string name="surround_title">Flikk Surround</string>
+    <string name="surround_off">Off</string>
+    <string name="surround_movie">Movie</string>
+    <string name="surround_music">Music</string>
+    <string name="surround_voice">Voice</string>
+    <string name="surround_night">Night</string>
+    <string name="surround_3d">3D</string>
+    <string name="surround_desc_off">Virtual 3D sound for headphones &amp; speakers</string>
+    <string name="surround_on">On · %1$s mode</string>
+    <string name="surround_unsupported">This phone doesn\'t support 3D sound</string>
+    <string name="phone_effects">Phone sound effects</string>
+    <string name="phone_effects_sub">Dolby Atmos &amp; audio settings on your phone</string>
+    <string name="phone_effects_none">No sound effects panel on this phone</string>
 </resources>

@@ -220,4 +220,20 @@
     <string name="now_playing_caps">अभी चल रहा है</string>
     <string name="track_of">गाना %1$d / %2$d · कुल %3$s</string>
     <string name="close">बंद करें</string>
+    <string name="section_sound">साउंड</string>
+    <string name="section_subtitles">सबटाइटल</string>
+    <string name="section_video">वीडियो</string>
+    <string name="surround_title">Flikk Surround</string>
+    <string name="surround_off">बंद</string>
+    <string name="surround_movie">मूवी</string>
+    <string name="surround_music">म्यूज़िक</string>
+    <string name="surround_voice">आवाज़</string>
+    <string name="surround_night">नाइट</string>
+    <string name="surround_3d">3D</string>
+    <string name="surround_desc_off">हेडफ़ोन और स्पीकर के लिए 3D साउंड</string>
+    <string name="surround_on">चालू · %1$s मोड</string>
+    <string name="surround_unsupported">इस फ़ोन में 3D साउंड सपोर्ट नहीं है</string>
+    <string name="phone_effects">फ़ोन साउंड इफ़ेक्ट</string>
+    <string name="phone_effects_sub">आपके फ़ोन के Dolby Atmos और ऑडियो सेटिंग</string>
+    <string name="phone_effects_none">इस फ़ोन में साउंड इफ़ेक्ट पैनल नहीं है</string>
 </resources>

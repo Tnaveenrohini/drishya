@@ -534,6 +534,9 @@ class PlayerActivity : AppCompatActivity() {
         playerView.resizeMode = resizeModes[resizeIdx]
         p.addListener(listener)
         applyPending()
+        // Mundu select chesina Flikk Surround mode malli on
+        val sm = settings.getInt("surround", 0)
+        if (sm > 0 && PlayerHolder.surround != sm) PlayerHolder.setSurround(sm)
         p.currentMediaItem?.let { titleView.text = it.mediaMetadata.title }
         updatePlayIcon()
         updateMarkers()
@@ -839,88 +842,251 @@ class PlayerActivity : AppCompatActivity() {
         openPanel(panelSettings)
     }
 
+    // ---------------------------------------------------------------- settings panel building blocks
+
+    /** Chinna grey CAPS label: SPEED, SOUND … */
+    private fun sectionLabel(text: String) = TextView(this).apply {
+        this.text = text.uppercase()
+        setTextColor(0xFF8A8A8A.toInt())
+        textSize = 11.5f
+        letterSpacing = 0.14f
+        setTypeface(typeface, Typeface.BOLD)
+        setPadding(dp(4), dp(22), 0, dp(8))
+    }
+
+    /** Rounded dark card — prathi section okka card lo. */
+    private fun card(): LinearLayout = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        background = ContextCompat.getDrawable(this@PlayerActivity, R.drawable.bg_card)
+        setPadding(dp(10), dp(10), dp(10), dp(10))
+    }
+
+    private fun chip(label: String, on: Boolean, onClick: () -> Unit) = TextView(this).apply {
+        text = label
+        setTextColor(if (on) 0xFF000000.toInt() else 0xFFFFFFFF.toInt())
+        textSize = 14f
+        gravity = Gravity.CENTER
+        if (on) setTypeface(typeface, Typeface.BOLD)
+        background = ContextCompat.getDrawable(this@PlayerActivity, if (on) R.drawable.bg_chip_on else R.drawable.bg_chip_off)
+        isClickable = true
+        setOnClickListener { onClick() }
+    }
+
+    /** Chips ni samanga grid ga (perRow prathi line). */
+    private fun chipGrid(chips: List<View>, perRow: Int): List<LinearLayout> =
+        chips.chunked(perRow).mapIndexed { r, chunk ->
+            LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                chunk.forEachIndexed { i, v ->
+                    addView(v, LinearLayout.LayoutParams(0, dp(40), 1f).apply {
+                        if (i > 0) marginStart = dp(8)
+                        if (r > 0) topMargin = dp(8)
+                    })
+                }
+                repeat(perRow - chunk.size) {
+                    addView(View(this@PlayerActivity), LinearLayout.LayoutParams(0, 1, 1f).apply { marginStart = dp(8) })
+                }
+            }
+        }
+
+    private fun surroundName(m: Int) = getString(
+        when (m) {
+            PlayerHolder.SURROUND_MOVIE -> R.string.surround_movie
+            PlayerHolder.SURROUND_MUSIC -> R.string.surround_music
+            PlayerHolder.SURROUND_VOICE -> R.string.surround_voice
+            PlayerHolder.SURROUND_NIGHT -> R.string.surround_night
+            PlayerHolder.SURROUND_3D -> R.string.surround_3d
+            else -> R.string.surround_off
+        }
+    )
+
+    private fun applySurround(m: Int) {
+        val ok = PlayerHolder.setSurround(m)
+        if (!ok && m != PlayerHolder.SURROUND_OFF) {
+            showHud(getString(R.string.surround_unsupported), 1800)
+            return
+        }
+        settings.edit().putInt("surround", m).apply()
+        showHud(if (m == PlayerHolder.SURROUND_OFF) getString(R.string.surround_title) + " · " + surroundName(m)
+        else getString(R.string.surround_title) + " · " + surroundName(m), 1200)
+    }
+
+    /** Phone lo unna Dolby Atmos / sound effects screen open cheyyi. */
+    private fun openPhoneEffects() {
+        val i = Intent(android.media.audiofx.AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL).apply {
+            putExtra(android.media.audiofx.AudioEffect.EXTRA_AUDIO_SESSION, PlayerHolder.audioSession())
+            putExtra(android.media.audiofx.AudioEffect.EXTRA_PACKAGE_NAME, packageName)
+            putExtra(android.media.audiofx.AudioEffect.EXTRA_CONTENT_TYPE, android.media.audiofx.AudioEffect.CONTENT_TYPE_MOVIE)
+        }
+        try {
+            startActivity(i)
+            return
+        } catch (_: Exception) {
+        }
+        for (pkg in listOf("com.dolby.daxappui", "com.dolby.atmos", "com.dolby.daxappUI", "com.dolby.ds1appUI")) {
+            val launch = packageManager.getLaunchIntentForPackage(pkg) ?: continue
+            try {
+                startActivity(launch)
+                return
+            } catch (_: Exception) {
+            }
+        }
+        showHud(getString(R.string.phone_effects_none), 1800)
+    }
+
     private fun buildSettings() {
         val c = panelSettingsContent
         c.removeAllViews()
-        c.addView(panelTitle(getString(R.string.playback_settings), big = true))
-        c.addView(divider())
+        c.addView(TextView(this).apply {
+            text = getString(R.string.playback_settings)
+            setTextColor(0xFFFFFFFF.toInt())
+            textSize = 22f
+            setTypeface(typeface, Typeface.BOLD)
+            setPadding(dp(4), dp(4), 0, 0)
+        })
+        c.addView(TextView(this).apply {
+            text = player?.currentMediaItem?.mediaMetadata?.title ?: ""
+            setTextColor(0xFF8A8A8A.toInt())
+            textSize = 13f
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+            setPadding(dp(4), dp(2), 0, 0)
+        })
 
-        // Share · Audio only · Info · Trim
+        // 1 · SPEED
+        c.addView(sectionLabel(getString(R.string.speed)))
+        val speedCard = card()
+        val current = player?.playbackParameters?.speed ?: 1f
+        chipGrid(SPEEDS.map { sp ->
+            val label = if (sp == sp.toInt().toFloat()) "${sp.toInt()}x" else "${sp}x"
+            chip(label, abs(sp - current) < 0.01f) {
+                player?.playbackParameters = PlaybackParameters(sp)
+                showHud(label)
+                buildSettings()
+            }
+        }, 4).forEach { speedCard.addView(it) }
+        c.addView(speedCard)
+
+        // 2 · SOUND — Flikk Surround hero + audio tools
+        c.addView(sectionLabel(getString(R.string.section_sound)))
+        val sound = card()
+        val sm = PlayerHolder.surround
+        val head = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(6), dp(4), dp(4), dp(10))
+        }
+        head.addView(ImageView(this).apply {
+            setImageResource(R.drawable.ic_surround)
+            imageTintList = ColorStateList.valueOf(if (sm > 0) 0xFF000000.toInt() else 0xFFFFFFFF.toInt())
+            background = ContextCompat.getDrawable(this@PlayerActivity, if (sm > 0) R.drawable.bg_mode_on else R.drawable.bg_chip_off)
+            setPadding(dp(9), dp(9), dp(9), dp(9))
+        }, LinearLayout.LayoutParams(dp(44), dp(44)))
+        val headText = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(12), 0, 0, 0) }
+        headText.addView(TextView(this).apply {
+            text = getString(R.string.surround_title)
+            setTextColor(0xFFFFFFFF.toInt())
+            textSize = 16f
+            setTypeface(typeface, Typeface.BOLD)
+        })
+        headText.addView(TextView(this).apply {
+            text = if (sm > 0) getString(R.string.surround_on, surroundName(sm)) else getString(R.string.surround_desc_off)
+            setTextColor(0xFFA3A3A3.toInt())
+            textSize = 12.5f
+        })
+        head.addView(headText, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        head.addView(TextView(this).apply {
+            text = if (sm > 0) "ON" else "OFF"
+            setTextColor(if (sm > 0) 0xFF000000.toInt() else 0xFFFFFFFF.toInt())
+            textSize = 12f
+            setTypeface(typeface, Typeface.BOLD)
+            gravity = Gravity.CENTER
+            background = ContextCompat.getDrawable(this@PlayerActivity, if (sm > 0) R.drawable.bg_chip_on else R.drawable.bg_chip_off)
+            isClickable = true
+            setOnClickListener {
+                applySurround(if (sm > 0) PlayerHolder.SURROUND_OFF else PlayerHolder.SURROUND_MOVIE)
+                buildSettings()
+            }
+        }, LinearLayout.LayoutParams(dp(56), dp(32)))
+        sound.addView(head)
+        val modes = listOf(PlayerHolder.SURROUND_MOVIE, PlayerHolder.SURROUND_MUSIC, PlayerHolder.SURROUND_VOICE,
+            PlayerHolder.SURROUND_NIGHT, PlayerHolder.SURROUND_3D)
+        chipGrid(modes.map { m ->
+            chip(surroundName(m), m == sm) {
+                applySurround(if (m == sm) PlayerHolder.SURROUND_OFF else m)
+                buildSettings()
+            }
+        }, 5).forEach { sound.addView(it) }
+        sound.addView(View(this).apply { setBackgroundColor(0xFF1E1E1E.toInt()) },
+            LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)).apply { topMargin = dp(12); bottomMargin = dp(4) })
         tileRows(listOf(
-            iconTile(R.drawable.ic_share, getString(R.string.share)) { shareCurrent() },
-            iconTile(R.drawable.ic_headphones, getString(R.string.audio_only), active = audioOnly) {
-                toggleAudioOnly()
-                buildSettings()
+            iconTile(R.drawable.ic_music, getString(R.string.audio_track)) {
+                trackDialog(C.TRACK_TYPE_AUDIO, R.string.audio_track)
             },
-            iconTile(R.drawable.ic_info, getString(R.string.info)) { showInfo() },
-            iconTile(R.drawable.ic_cut, getString(R.string.trim)) { trimDialog() },
-            iconTile(R.drawable.ic_ab, getString(R.string.ab_repeat), active = abA != C.TIME_UNSET) {
-                abStep()
-                buildSettings()
-            },
-            iconTile(R.drawable.ic_bookmark, getString(R.string.add_bookmark)) { addBookmark() },
-            iconTile(R.drawable.ic_bookmarks, getString(R.string.bookmarks)) { bookmarksDialog() },
-        )).forEach { c.addView(it) }
-        c.addView(divider())
+            iconTile(R.drawable.ic_equalizer, getString(R.string.equalizer), active = PlayerHolder.eqPreset >= 0) { equalizerDialog() },
+            iconTile(R.drawable.ic_volume, getString(R.string.volume_boost), active = PlayerHolder.boostLevel > 0) { boostDialog() },
+            iconTile(R.drawable.ic_timer, getString(R.string.audio_delay)) { audioDelayDialog() },
+        )).forEach { sound.addView(it) }
+        // Phone Dolby Atmos / sound effects
+        val phoneRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(8), dp(12), dp(8), dp(6))
+            isClickable = true
+            background = ContextCompat.getDrawable(this@PlayerActivity, R.drawable.bg_chip_off)
+            setOnClickListener { openPhoneEffects() }
+        }
+        phoneRow.addView(ImageView(this).apply {
+            setImageResource(R.drawable.ic_tune)
+            imageTintList = ColorStateList.valueOf(0xFFFFFFFF.toInt())
+        }, LinearLayout.LayoutParams(dp(22), dp(22)).apply { marginStart = dp(6) })
+        val pt = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(12), 0, 0, dp(6)) }
+        pt.addView(TextView(this).apply {
+            text = getString(R.string.phone_effects)
+            setTextColor(0xFFFFFFFF.toInt())
+            textSize = 14f
+        })
+        pt.addView(TextView(this).apply {
+            text = getString(R.string.phone_effects_sub)
+            setTextColor(0xFF8A8A8A.toInt())
+            textSize = 11.5f
+        })
+        phoneRow.addView(pt, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        phoneRow.addView(TextView(this).apply { text = "›"; setTextColor(0xFFFFFFFF.toInt()); textSize = 22f },
+            LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginEnd = dp(8) })
+        sound.addView(phoneRow, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(8) })
+        c.addView(sound)
 
-        // Playback mode
-        c.addView(panelTitle(getString(R.string.playback_mode)))
+        // 3 · SUBTITLES
+        c.addView(sectionLabel(getString(R.string.section_subtitles)))
+        val subs = card()
+        tileRows(listOf(
+            iconTile(R.drawable.ic_subtitle, getString(R.string.subtitle_track)) {
+                trackDialog(C.TRACK_TYPE_TEXT, R.string.subtitle_track)
+            },
+            iconTile(R.drawable.ic_add, getString(R.string.load_subtitles)) { pickSubtitle.launch(arrayOf("*/*")) },
+            iconTile(R.drawable.ic_timer, getString(R.string.subtitle_delay)) { subtitleDelayDialog() },
+        )).forEach { subs.addView(it) }
+        c.addView(subs)
+
+        // 4 · PLAYBACK
+        c.addView(sectionLabel(getString(R.string.playback_mode)))
+        val play = card()
         val mode = PlayerHolder.playMode
-        val modes = listOf(
+        val playModes = listOf(
             Triple(PlayerHolder.MODE_ALL, R.drawable.ic_repeat, R.string.mode_all),
             Triple(PlayerHolder.MODE_ONE, R.drawable.ic_repeat_one, R.string.mode_one),
             Triple(PlayerHolder.MODE_ONCE, R.drawable.ic_play_once, R.string.mode_once),
             Triple(PlayerHolder.MODE_SHUFFLE, R.drawable.ic_shuffle, R.string.mode_shuffle),
         )
-        tileRows(modes.map { (m, icon, label) ->
+        tileRows(playModes.map { (m, icon, label) ->
             iconTile(icon, getString(label), active = m == mode) {
                 PlayerHolder.applyPlayMode(m)
                 settings.edit().putInt("play_mode", m).apply()
                 showHud(getString(label))
                 buildSettings()
             }
-        }).forEach { c.addView(it) }
-        c.addView(divider())
-
-        // Speed
-        c.addView(panelTitle(getString(R.string.speed)))
-        val current = player?.playbackParameters?.speed ?: 1f
-        val chips = LinearLayout(this)
-        chips.orientation = LinearLayout.HORIZONTAL
-        SPEEDS.forEach { sp ->
-            val on = abs(sp - current) < 0.01f
-            val chip = TextView(this)
-            chip.text = if (sp == sp.toInt().toFloat()) "${sp.toInt()}.0x" else "${sp}x"
-            chip.setTextColor(if (on) 0xFF000000.toInt() else 0xFFFFFFFF.toInt())
-            chip.textSize = 15f
-            chip.gravity = Gravity.CENTER
-            chip.background = ContextCompat.getDrawable(this, if (on) R.drawable.bg_chip_on else R.drawable.bg_chip_off)
-            chip.setPadding(dp(14), 0, dp(14), 0)
-            chip.isClickable = true
-            chip.setOnClickListener {
-                player?.playbackParameters = PlaybackParameters(sp)
-                buildSettings()
-            }
-            chips.addView(chip, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(40)).apply {
-                marginEnd = dp(8)
-            })
-        }
-        val scroller = HorizontalScrollView(this)
-        scroller.isHorizontalScrollBarEnabled = false
-        scroller.addView(chips)
-        c.addView(scroller)
-        c.addView(divider())
-
-        // More tools
-        c.addView(panelTitle(getString(R.string.tools)))
-        tileRows(listOf(
-            iconTile(R.drawable.ic_subtitle, getString(R.string.subtitle_track)) {
-                trackDialog(C.TRACK_TYPE_TEXT, R.string.subtitle_track)
-            },
-            iconTile(R.drawable.ic_add, getString(R.string.load_subtitles)) { pickSubtitle.launch(arrayOf("*/*")) },
-            iconTile(R.drawable.ic_music, getString(R.string.audio_track)) {
-                trackDialog(C.TRACK_TYPE_AUDIO, R.string.audio_track)
-            },
+        } + listOf(
             iconTile(R.drawable.ic_moon, getString(R.string.sleep_timer), active = PlayerHolder.sleepActive()) {
                 sleepDialog()
             },
@@ -928,20 +1094,45 @@ class PlayerActivity : AppCompatActivity() {
                 toggleBackground()
                 buildSettings()
             },
-            iconTile(R.drawable.ic_equalizer, getString(R.string.equalizer)) { equalizerDialog() },
-            iconTile(R.drawable.ic_volume, getString(R.string.volume_boost)) { boostDialog() },
-            iconTile(R.drawable.ic_timer, getString(R.string.audio_delay)) { audioDelayDialog() },
-            iconTile(R.drawable.ic_timer, getString(R.string.subtitle_delay)) { subtitleDelayDialog() },
+            iconTile(R.drawable.ic_music, getString(R.string.audio_only), active = audioOnly) {
+                toggleAudioOnly()
+                buildSettings()
+            },
+        )).forEach { play.addView(it) }
+        c.addView(play)
+
+        // 5 · VIDEO
+        c.addView(sectionLabel(getString(R.string.section_video)))
+        val video = card()
+        tileRows(listOf(
+            iconTile(R.drawable.ic_resize, getString(R.string.resize)) { cycleResize() },
             iconTile(R.drawable.ic_360, getString(R.string.mode_360), active = is360) {
                 toggle360()
                 buildSettings()
             },
-            iconTile(R.drawable.ic_resize, getString(R.string.resize)) { cycleResize() },
             iconTile(R.drawable.ic_lock, getString(R.string.lock)) {
                 closePanels()
                 lock()
             },
-        )).forEach { c.addView(it) }
+            iconTile(R.drawable.ic_info, getString(R.string.info)) { showInfo() },
+        )).forEach { video.addView(it) }
+        c.addView(video)
+
+        // 6 · TOOLS
+        c.addView(sectionLabel(getString(R.string.tools)))
+        val tools = card()
+        tileRows(listOf(
+            iconTile(R.drawable.ic_ab, getString(R.string.ab_repeat), active = abA != C.TIME_UNSET) {
+                abStep()
+                buildSettings()
+            },
+            iconTile(R.drawable.ic_bookmark, getString(R.string.add_bookmark)) { addBookmark() },
+            iconTile(R.drawable.ic_bookmarks, getString(R.string.bookmarks)) { bookmarksDialog() },
+            iconTile(R.drawable.ic_cut, getString(R.string.trim)) { trimDialog() },
+            iconTile(R.drawable.ic_share, getString(R.string.share)) { shareCurrent() },
+        )).forEach { tools.addView(it) }
+        c.addView(tools)
+        c.addView(View(this), LinearLayout.LayoutParams(1, dp(24)))
     }
 
     // ================================================================ A-B repeat + bookmarks

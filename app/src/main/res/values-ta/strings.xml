@@ -220,4 +220,20 @@
     <string name="now_playing_caps">இப்போது இயங்குகிறது</string>
     <string name="track_of">பாடல் %1$d / %2$d · மொத்தம் %3$s</string>
     <string name="close">மூடு</string>
+    <string name="section_sound">ஒலி</string>
+    <string name="section_subtitles">வசனங்கள்</string>
+    <string name="section_video">வீடியோ</string>
+    <string name="surround_title">Flikk Surround</string>
+    <string name="surround_off">ஆஃப்</string>
+    <string name="surround_movie">திரைப்படம்</string>
+    <string name="surround_music">இசை</string>
+    <string name="surround_voice">குரல்</string>
+    <string name="surround_night">இரவு</string>
+    <string name="surround_3d">3D</string>
+    <string name="surround_desc_off">ஹெட்ஃபோன், ஸ்பீக்கருக்கு 3D ஒலி</string>
+    <string name="surround_on">ஆன் · %1$s முறை</string>
+    <string name="surround_unsupported">இந்த போனில் 3D ஒலி ஆதரவு இல்லை</string>
+    <string name="phone_effects">போன் ஒலி விளைவுகள்</string>
+    <string name="phone_effects_sub">உங்கள் போனின் Dolby Atmos &amp; ஆடியோ அமைப்புகள்</string>
+    <string name="phone_effects_none">இந்த போனில் ஒலி விளைவு பலகம் இல்லை</string>
 </resources>

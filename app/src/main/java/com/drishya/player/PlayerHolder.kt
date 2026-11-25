@@ -1,7 +1,11 @@
 package com.drishya.player
 
 import android.content.Context
+import android.content.Intent
+import android.media.audiofx.AudioEffect
+import android.media.audiofx.BassBoost
 import android.media.audiofx.Equalizer
+import android.media.audiofx.Virtualizer
 import android.media.audiofx.LoudnessEnhancer
 import android.os.Handler
 import android.os.Looper
@@ -82,7 +86,17 @@ object PlayerHolder {
             )
             .setHandleAudioBecomingNoisy(true)
             .build()
+        appCtx = app
+        openSystemSession(p.audioSessionId)
         p.addListener(object : Player.Listener {
+            override fun onAudioSessionIdChanged(audioSessionId: Int) {
+                // Kotha session: phone effects (Dolby Atmos) + mana surround malli attach
+                openSystemSession(audioSessionId)
+                val lvl = surround
+                releaseEffects()
+                if (lvl > 0) setSurround(lvl)
+            }
+
             override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
                 if (reason == Player.PLAY_WHEN_READY_CHANGE_REASON_END_OF_MEDIA_ITEM && sleepAtEnd) {
                     cancelSleep()
@@ -113,6 +127,7 @@ object PlayerHolder {
         delaySink = null
         audioDelayMs = 0L
         releaseEffects()
+        player?.let { closeSystemSession(it.audioSessionId) }
         player?.release()
         player = null
     }
@@ -174,11 +189,121 @@ object PlayerHolder {
     private fun releaseEffects() {
         try { eq?.release() } catch (_: Throwable) {}
         try { boost?.release() } catch (_: Throwable) {}
+        try { virt?.release() } catch (_: Throwable) {}
+        try { bass?.release() } catch (_: Throwable) {}
         eq = null
         boost = null
+        virt = null
+        bass = null
         eqPreset = -1
         boostLevel = 0
+        surround = 0
     }
+
+    // ---------------------------------------------------------------- Flikk Surround (virtual 3D sound)
+
+    const val SURROUND_OFF = 0
+    const val SURROUND_MOVIE = 1
+    const val SURROUND_MUSIC = 2
+    const val SURROUND_VOICE = 3
+    const val SURROUND_NIGHT = 4
+    const val SURROUND_3D = 5
+
+    private var appCtx: Context? = null
+    private var virt: Virtualizer? = null
+    private var bass: BassBoost? = null
+    var surround = SURROUND_OFF
+        private set
+
+    /** Prathi mode: virtualizer, bass, low / mid / high EQ (millibels), loudness gain. */
+    private data class Tune(val virt: Int, val bass: Int, val low: Int, val mid: Int, val high: Int, val gain: Int)
+
+    private val tunes = mapOf(
+        SURROUND_MOVIE to Tune(1000, 650, 400, 0, 300, 300),
+        SURROUND_MUSIC to Tune(600, 800, 500, -100, 400, 0),
+        SURROUND_VOICE to Tune(250, 0, -400, 600, 200, 400),
+        SURROUND_NIGHT to Tune(350, 0, -500, 300, 0, 800),
+        SURROUND_3D to Tune(1000, 300, 200, 0, 500, 200),
+    )
+
+    /** true = phone support chesindi. */
+    fun setSurround(mode: Int): Boolean {
+        val p = player ?: return false
+        val session = p.audioSessionId
+        if (mode == SURROUND_OFF) {
+            try { virt?.enabled = false } catch (_: Throwable) {}
+            try { bass?.enabled = false } catch (_: Throwable) {}
+            try { eq?.enabled = false } catch (_: Throwable) {}
+            setBoost(0)
+            surround = SURROUND_OFF
+            eqPreset = -1
+            return true
+        }
+        val t = tunes[mode] ?: return false
+        var ok = false
+        try {
+            val v = virt ?: Virtualizer(0, session).also { virt = it }
+            if (v.strengthSupported) v.setStrength(t.virt.toShort())
+            v.enabled = true
+            ok = true
+        } catch (_: Throwable) {}
+        try {
+            val b = bass ?: BassBoost(0, session).also { bass = it }
+            if (b.strengthSupported) b.setStrength(t.bass.toShort())
+            b.enabled = t.bass > 0
+            ok = true
+        } catch (_: Throwable) {}
+        try {
+            val e = equalizer()
+            if (e != null) {
+                val range = e.bandLevelRange
+                for (i in 0 until e.numberOfBands) {
+                    val hz = e.getCenterFreq(i.toShort()) / 1000
+                    val lvl = when {
+                        hz < 250 -> t.low
+                        hz < 4000 -> t.mid
+                        else -> t.high
+                    }.coerceIn(range[0].toInt(), range[1].toInt())
+                    e.setBandLevel(i.toShort(), lvl.toShort())
+                }
+                e.enabled = true
+                eqPreset = -2
+                ok = true
+            }
+        } catch (_: Throwable) {}
+        try {
+            val l = boost ?: LoudnessEnhancer(session).also { boost = it }
+            l.setTargetGain(t.gain)
+            l.enabled = t.gain > 0
+        } catch (_: Throwable) {}
+        if (ok) surround = mode
+        return ok
+    }
+
+    /** Phone lo unna Dolby Atmos / sound effects ki mana audio ni chupinchu. */
+    private fun openSystemSession(session: Int) {
+        val c = appCtx ?: return
+        if (session == C.AUDIO_SESSION_ID_UNSET) return
+        try {
+            c.sendBroadcast(Intent(AudioEffect.ACTION_OPEN_AUDIO_EFFECT_CONTROL_SESSION).apply {
+                putExtra(AudioEffect.EXTRA_AUDIO_SESSION, session)
+                putExtra(AudioEffect.EXTRA_PACKAGE_NAME, c.packageName)
+                putExtra(AudioEffect.EXTRA_CONTENT_TYPE, AudioEffect.CONTENT_TYPE_MOVIE)
+            })
+        } catch (_: Throwable) {}
+    }
+
+    private fun closeSystemSession(session: Int) {
+        val c = appCtx ?: return
+        try {
+            c.sendBroadcast(Intent(AudioEffect.ACTION_CLOSE_AUDIO_EFFECT_CONTROL_SESSION).apply {
+                putExtra(AudioEffect.EXTRA_AUDIO_SESSION, session)
+                putExtra(AudioEffect.EXTRA_PACKAGE_NAME, c.packageName)
+            })
+        } catch (_: Throwable) {}
+    }
+
+    fun audioSession(): Int = player?.audioSessionId ?: C.AUDIO_SESSION_ID_UNSET
 
     fun setSleep(minutes: Int) {
         cancelSleep()

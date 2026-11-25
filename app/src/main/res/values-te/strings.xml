@@ -234,4 +234,20 @@
     <string name="now_playing_caps">ఇప్పుడు ప్లే అవుతోంది</string>
     <string name="track_of">పాట %1$d / %2$d · మొత్తం %3$s</string>
     <string name="close">మూసివేయి</string>
+    <string name="section_sound">సౌండ్</string>
+    <string name="section_subtitles">సబ్‌టైటిల్స్</string>
+    <string name="section_video">వీడియో</string>
+    <string name="surround_title">Flikk Surround</string>
+    <string name="surround_off">ఆఫ్</string>
+    <string name="surround_movie">సినిమా</string>
+    <string name="surround_music">మ్యూజిక్</string>
+    <string name="surround_voice">వాయిస్</string>
+    <string name="surround_night">నైట్</string>
+    <string name="surround_3d">3D</string>
+    <string name="surround_desc_off">హెడ్‌ఫోన్స్, స్పీకర్స్ కి 3D సౌండ్</string>
+    <string name="surround_on">ఆన్ · %1$s మోడ్</string>
+    <string name="surround_unsupported">ఈ ఫోన్‌లో 3D సౌండ్ సపోర్ట్ లేదు</string>
+    <string name="phone_effects">ఫోన్ సౌండ్ ఎఫెక్ట్స్</string>
+    <string name="phone_effects_sub">మీ ఫోన్‌లో ఉన్న Dolby Atmos &amp; ఆడియో సెట్టింగ్స్</string>
+    <string name="phone_effects_none">ఈ ఫోన్‌లో సౌండ్ ఎఫెక్ట్స్ ప్యానెల్ లేదు</string>
 </resources>
