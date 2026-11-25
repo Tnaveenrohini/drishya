@@ -213,4 +213,6 @@
     <string name="shelf_movies">फ़िल्में · 1 घंटा+</string>
     <string name="all_videos">सभी वीडियो</string>
     <string name="see_all">सब देखें</string>
+    <string name="hero_continue">देखना जारी रखें · %1$d%%</string>
+    <string name="info_added">जोड़ा गया</string>
 </resources>

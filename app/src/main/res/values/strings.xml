@@ -234,4 +234,6 @@
     <string name="shelf_movies">Movies · 1 hr+</string>
     <string name="all_videos">All videos</string>
     <string name="see_all">See all</string>
+    <string name="hero_continue">CONTINUE WATCHING · %1$d%%</string>
+    <string name="info_added">Added</string>
 </resources>

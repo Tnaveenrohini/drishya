@@ -427,6 +427,7 @@ class MainActivity : AppCompatActivity() {
         backCallback.isEnabled = inside || selecting || searchBox.visibility == View.VISIBLE
 
         header.visibility = if (selecting) View.GONE else View.VISIBLE
+        subTitle.visibility = View.VISIBLE
         selHeader.visibility = if (selecting) View.VISIBLE else View.GONE
         selectBar.visibility = if (selecting) View.VISIBLE else View.GONE
         btnBack.visibility = if (inside) View.VISIBLE else View.GONE
@@ -480,7 +481,8 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        val showContinue = !inside && !selecting && tab == 0 && query.isBlank()
+        val showContinue = !inside && !selecting && tab == 0 && query.isBlank() &&
+            searchBox.visibility != View.VISIBLE
         updateMiniBar(inside || selecting || showContinue)
         if (allVideos.isEmpty()) {
             subTitle.text = ""
@@ -556,19 +558,49 @@ class MainActivity : AppCompatActivity() {
         showVideos(all.filter { inCat(it, cat) }, "")
         val rows = recycler.adapter ?: return
         val parts = ArrayList<RecyclerView.Adapter<out RecyclerView.ViewHolder>>()
-        lastUnfinished()?.let { v ->
-            val saved = resumePrefs.getLong(v.uri.toString(), 0L)
-            val left = (v.durationMs - saved).coerceAtLeast(0L)
-            val sub = if (v.durationMs > 0) getString(R.string.time_left, formatTime(left))
-            else getString(R.string.paused_at, formatTime(saved))
-            parts += ContinueAdapter(v, saved, sub) { openPlayer(listOf(v), 0) }
-        }
+        // 1A: full-bleed hero (sagam chusinavi, lekapothe kotha video)
+        val unfinished = Library.recent(this, allVideos)
+            .filter { resumePrefs.getLong(it.uri.toString(), 0L) > 5000 }.take(5)
+        val heroList = unfinished.ifEmpty { allVideos.sortedByDescending { it.dateAdded }.take(1) }
+        val continuing = unfinished.isNotEmpty()
+        parts += HeroAdapter(
+            heroList,
+            label = { v ->
+                if (!continuing) getString(R.string.shelf_recent).uppercase()
+                else {
+                    val pct = if (v.durationMs > 0)
+                        (resumePrefs.getLong(v.uri.toString(), 0L) * 100 / v.durationMs).toInt() else 0
+                    getString(R.string.hero_continue, pct)
+                }
+            },
+            meta = { v ->
+                val saved = resumePrefs.getLong(v.uri.toString(), 0L)
+                val first = if (continuing && v.durationMs > 0)
+                    getString(R.string.time_left, formatTime((v.durationMs - saved).coerceAtLeast(0L)))
+                else formatTime(v.durationMs)
+                listOf(first, v.quality, android.text.format.Formatter.formatShortFileSize(this, v.sizeBytes))
+                    .filter { it.isNotBlank() }.joinToString(" · ")
+            },
+            buttonText = getString(if (continuing) R.string.resume else R.string.play),
+            onResume = { i -> if (i in heroList.indices) openPlayer(listOf(heroList[i]), 0) },
+            onAdd = { v -> choosePlaylist(listOf(v.uri.toString())) },
+            onInfo = { v -> videoInfo(v) },
+            onSearch = { toggleSearch() },
+            onMenu = { showHomeMenu(it) },
+        )
         if (chips.size > 1) {
             parts += ChipsAdapter(chips.map { catLabel(it) }, homeChip) { i ->
                 homeChip = i
                 render()
             }
         }
+        parts += QuickLinksAdapter(
+            listOf(
+                getString(R.string.tab_folders) + "\n" + allVideos.map { it.folder }.distinct().size,
+                getString(R.string.tab_playlists) + "\n" + (Library.userPlaylistNames(this).size + 1),
+                getString(R.string.tab_recent) + "\n" + Library.recent(this, allVideos).size,
+            )
+        ) { i -> tabs.getTabAt(i + 1)?.select() }
         if (cat == Cat.ALL) {
             fun shelf(title: String, list: List<Video>, portrait: Boolean, seeAll: Cat?) {
                 if (list.size < 2) return
@@ -589,8 +621,27 @@ class MainActivity : AppCompatActivity() {
         }
         parts += rows
         recycler.adapter = androidx.recyclerview.widget.ConcatAdapter(parts)
-        bigTitle.text = getString(R.string.app_name)
-        subTitle.text = getString(R.string.count_summary, allVideos.size, allVideos.map { it.folder }.distinct().size)
+        // Hero lo header undi kabatti paina header, tabs dachu
+        header.visibility = View.GONE
+        tabs.visibility = View.GONE
+        subTitle.visibility = View.GONE
+    }
+
+    private fun videoInfo(v: Video) {
+        val lines = listOf(
+            getString(R.string.info_file) to v.name,
+            getString(R.string.info_duration) to formatTime(v.durationMs),
+            getString(R.string.info_size) to android.text.format.Formatter.formatFileSize(this, v.sizeBytes),
+            getString(R.string.info_resolution) to v.quality,
+            getString(R.string.info_location) to v.folder,
+            getString(R.string.info_added) to java.text.DateFormat.getDateInstance()
+                .format(java.util.Date(v.dateAdded * 1000)),
+        ).filter { it.second.isNotBlank() }
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.info)
+            .setMessage(lines.joinToString("\n") { "${it.first}: ${it.second}" })
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
     }
 
     private fun lastUnfinished(): Video? = Library.recent(this, allVideos)

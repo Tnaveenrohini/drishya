@@ -213,4 +213,6 @@
     <string name="shelf_movies">திரைப்படங்கள் · 1 மணி+</string>
     <string name="all_videos">அனைத்து வீடியோக்கள்</string>
     <string name="see_all">அனைத்தும் பார்</string>
+    <string name="hero_continue">தொடர்ந்து பார்க்க · %1$d%%</string>
+    <string name="info_added">சேர்த்த தேதி</string>
 </resources>

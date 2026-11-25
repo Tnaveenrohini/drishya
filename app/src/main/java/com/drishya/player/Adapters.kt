@@ -382,3 +382,122 @@ class SectionTitleAdapter(private val title: String) : RecyclerView.Adapter<Recy
         (h.itemView as TextView).text = title
     }
 }
+
+// ---------------------------------------------------------------- Home 1A: full-bleed hero carousel
+
+class HeroAdapter(
+    private val items: List<Video>,
+    private val label: (Video) -> String,
+    private val meta: (Video) -> String,
+    private val buttonText: String,
+    private val onResume: (Int) -> Unit,
+    private val onAdd: (Video) -> Unit,
+    private val onInfo: (Video) -> Unit,
+    private val onSearch: () -> Unit,
+    private val onMenu: (View) -> Unit,
+) : RecyclerView.Adapter<HeroAdapter.VH>() {
+    class VH(v: View) : RecyclerView.ViewHolder(v) {
+        val pager: RecyclerView = v.findViewById(R.id.hero_pager)
+        val dots: android.widget.LinearLayout = v.findViewById(R.id.hero_dots)
+        val search: View = v.findViewById(R.id.hero_search)
+        val menu: View = v.findViewById(R.id.hero_menu)
+        val snap = androidx.recyclerview.widget.PagerSnapHelper()
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+        val vh = VH(LayoutInflater.from(parent.context).inflate(R.layout.item_hero, parent, false))
+        vh.pager.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(
+            parent.context, androidx.recyclerview.widget.LinearLayoutManager.HORIZONTAL, false
+        )
+        vh.snap.attachToRecyclerView(vh.pager)
+        vh.pager.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(rv: RecyclerView, newState: Int) {
+                if (newState != RecyclerView.SCROLL_STATE_IDLE) return
+                val v = vh.snap.findSnapView(rv.layoutManager) ?: return
+                setDots(vh, rv.getChildAdapterPosition(v))
+            }
+        })
+        return vh
+    }
+
+    override fun getItemCount() = 1
+
+    private fun setDots(h: VH, sel: Int) {
+        val d = h.itemView.resources.displayMetrics.density
+        h.dots.removeAllViews()
+        if (items.size < 2) return
+        items.indices.forEach { i ->
+            val dot = View(h.itemView.context)
+            dot.setBackgroundResource(R.drawable.bg_dot)
+            dot.alpha = if (i == sel) 1f else 0.35f
+            val lp = android.widget.LinearLayout.LayoutParams(((if (i == sel) 18 else 6) * d).toInt(), (6 * d).toInt())
+            lp.marginStart = (6 * d).toInt()
+            h.dots.addView(dot, lp)
+        }
+    }
+
+    override fun onBindViewHolder(h: VH, position: Int) {
+        h.search.setOnClickListener { onSearch() }
+        h.menu.setOnClickListener { onMenu(it) }
+        h.pager.adapter = PageAdapter()
+        setDots(h, 0)
+    }
+
+    private inner class PageAdapter : RecyclerView.Adapter<PageAdapter.PH>() {
+        inner class PH(v: View) : RecyclerView.ViewHolder(v) {
+            val thumb: ImageView = v.findViewById(R.id.hp_thumb)
+            val label: TextView = v.findViewById(R.id.hp_label)
+            val title: TextView = v.findViewById(R.id.hp_title)
+            val meta: TextView = v.findViewById(R.id.hp_meta)
+            val resume: TextView = v.findViewById(R.id.hp_resume)
+            val add: View = v.findViewById(R.id.hp_add)
+            val info: View = v.findViewById(R.id.hp_info)
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PH {
+            val ph = PH(LayoutInflater.from(parent.context).inflate(R.layout.item_hero_page, parent, false))
+            val d = parent.resources.displayMetrics.density
+            val icon = androidx.core.content.ContextCompat.getDrawable(parent.context, R.drawable.ic_play)?.mutate()
+            icon?.setTint(0xFF000000.toInt())
+            icon?.setBounds(0, 0, (18 * d).toInt(), (18 * d).toInt())
+            ph.resume.setCompoundDrawablesRelative(icon, null, null, null)
+            return ph
+        }
+
+        override fun getItemCount() = items.size
+
+        override fun onBindViewHolder(h: PH, position: Int) {
+            val v = items[position]
+            h.label.text = label(v)
+            h.title.text = v.name.substringBeforeLast('.')
+            h.meta.text = meta(v)
+            h.resume.text = buttonText
+            Glide.with(h.thumb).load(v.uri).centerCrop().into(h.thumb)
+            h.resume.setOnClickListener { onResume(h.bindingAdapterPosition) }
+            h.thumb.setOnClickListener { onResume(h.bindingAdapterPosition) }
+            h.add.setOnClickListener { onAdd(v) }
+            h.info.setOnClickListener { onInfo(v) }
+        }
+    }
+}
+
+/** Folders · Playlists · Recent quick buttons (home lo tabs badulu). */
+class QuickLinksAdapter(
+    private val labels: List<String>,
+    private val onClick: (Int) -> Unit,
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
+        object : RecyclerView.ViewHolder(
+            LayoutInflater.from(parent.context).inflate(R.layout.item_quick_links, parent, false)
+        ) {}
+
+    override fun getItemCount() = 1
+
+    override fun onBindViewHolder(h: RecyclerView.ViewHolder, position: Int) {
+        listOf(R.id.ql_folders, R.id.ql_playlists, R.id.ql_recent).forEachIndexed { i, id ->
+            val t = h.itemView.findViewById<TextView>(id)
+            t.text = labels[i]
+            t.setOnClickListener { onClick(i) }
+        }
+    }
+}

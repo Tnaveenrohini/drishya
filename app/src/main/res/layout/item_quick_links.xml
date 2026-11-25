@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingStart="12dp"
+    android:paddingTop="10dp"
+    android:paddingEnd="12dp">
+
+    <TextView
+        android:id="@+id/ql_folders"
+        style="@style/QuickLink" />
+
+    <TextView
+        android:id="@+id/ql_playlists"
+        style="@style/QuickLink" />
+
+    <TextView
+        android:id="@+id/ql_recent"
+        style="@style/QuickLink" />
+</LinearLayout>
