@@ -1148,10 +1148,10 @@ class PlayerActivity : AppCompatActivity() {
             rows += R.string.info_audio to "${f.sampleMimeType?.substringAfter('/') ?: "?"}$ch$hz"
         }
         rows += R.string.info_location to Uri.decode(uri.toString())
-        val text = rows.joinToString("\n\n") { (k, v) -> "${getString(k)}\n$v" }
+        val title = rows.firstOrNull()?.second ?: getString(R.string.info)
+        val view = UiKit.infoView(this, title, rows.drop(1).map { (k, v) -> getString(k) to v })
         MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.info)
-            .setMessage(text)
+            .setView(view)
             .setPositiveButton(R.string.ok, null)
             .show()
     }

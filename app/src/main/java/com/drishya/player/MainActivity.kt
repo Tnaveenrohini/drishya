@@ -628,19 +628,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun videoInfo(v: Video) {
-        val lines = listOf(
-            getString(R.string.info_file) to v.name,
-            getString(R.string.info_duration) to formatTime(v.durationMs),
-            getString(R.string.info_size) to android.text.format.Formatter.formatFileSize(this, v.sizeBytes),
-            getString(R.string.info_resolution) to v.quality.orEmpty(),
-            getString(R.string.info_location) to v.folder,
-            getString(R.string.info_added) to java.text.DateFormat.getDateInstance()
-                .format(java.util.Date(v.dateAdded * 1000)),
-        ).filter { it.second.isNotBlank() }
+        val view = UiKit.infoView(
+            this, v.name,
+            listOf(
+                getString(R.string.info_size) to android.text.format.Formatter.formatFileSize(this, v.sizeBytes),
+                getString(R.string.info_resolution) to v.quality.orEmpty(),
+                getString(R.string.info_duration) to formatTime(v.durationMs),
+                getString(R.string.info_location) to v.folder,
+                getString(R.string.info_added) to java.text.DateFormat.getDateInstance()
+                    .format(java.util.Date(v.dateAdded * 1000)),
+            ),
+            thumb = v.uri, badge = formatTime(v.durationMs),
+        )
         MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.info)
-            .setMessage(lines.joinToString("\n") { "${it.first}: ${it.second}" })
-            .setPositiveButton(android.R.string.ok, null)
+            .setView(view)
+            .setPositiveButton(R.string.play) { _, _ -> openPlayer(listOf(v), 0) }
+            .setNegativeButton(R.string.close, null)
             .show()
     }
 

@@ -12,6 +12,81 @@
         <item name="android:navigationBarColor">@color/bg</item>
         <item name="colorControlNormal">@color/text</item>
         <item name="flikkAccent">@color/accent</item>
+        <!-- Dialogs, menus: app laage black & white -->
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.Flikk.Dialog</item>
+        <item name="popupMenuStyle">@style/Flikk.PopupMenu</item>
+        <item name="android:popupMenuStyle">@style/Flikk.PopupMenu</item>
+        <item name="popupMenuBackground">@drawable/bg_popup</item>
+        <item name="textAppearanceLargePopupMenu">@style/Flikk.PopupText</item>
+        <item name="textAppearanceSmallPopupMenu">@style/Flikk.PopupText</item>
+    </style>
+
+    <style name="ThemeOverlay.Flikk.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="colorSurface">#121212</item>
+        <item name="colorSurfaceContainerHigh">#121212</item>
+        <item name="colorPrimary">#FFFFFF</item>
+        <item name="colorOnPrimary">#000000</item>
+        <item name="colorOnSurface">#FFFFFF</item>
+        <item name="colorOnSurfaceVariant">#BDBDBD</item>
+        <item name="colorSecondary">#FFFFFF</item>
+        <item name="colorControlActivated">#FFFFFF</item>
+        <item name="alertDialogStyle">@style/Flikk.AlertDialog</item>
+        <item name="materialAlertDialogTitleTextStyle">@style/Flikk.DialogTitle</item>
+        <item name="materialAlertDialogBodyTextStyle">@style/Flikk.DialogBody</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Flikk.DialogButton.Primary</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Flikk.DialogButton</item>
+        <item name="buttonBarNeutralButtonStyle">@style/Flikk.DialogButton</item>
+    </style>
+
+    <style name="Flikk.AlertDialog" parent="MaterialAlertDialog.Material3">
+        <item name="shapeAppearance">@style/Flikk.DialogShape</item>
+        <item name="backgroundTint">#121212</item>
+    </style>
+
+    <style name="Flikk.DialogShape" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">28dp</item>
+    </style>
+
+    <style name="Flikk.DialogTitle" parent="MaterialAlertDialog.Material3.Title.Text">
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="Flikk.DialogBody" parent="MaterialAlertDialog.Material3.Body.Text">
+        <item name="android:textColor">#BDBDBD</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:lineSpacingExtra">3dp</item>
+    </style>
+
+    <style name="Flikk.DialogButton" parent="Widget.Material3.Button.TextButton.Dialog">
+        <item name="android:textColor">#BDBDBD</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textSize">15sp</item>
+    </style>
+
+    <style name="Flikk.DialogButton.Primary" parent="Widget.Material3.Button">
+        <item name="backgroundTint">#FFFFFF</item>
+        <item name="android:textColor">#000000</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:minHeight">44dp</item>
+        <item name="android:layout_marginStart">8dp</item>
+        <item name="cornerRadius">22dp</item>
+        <item name="android:paddingStart">22dp</item>
+        <item name="android:paddingEnd">22dp</item>
+    </style>
+
+    <style name="Flikk.PopupMenu" parent="Widget.Material3.PopupMenu">
+        <item name="android:popupBackground">@drawable/bg_popup</item>
+        <item name="android:popupElevation">10dp</item>
+    </style>
+
+    <style name="Flikk.PopupText" parent="TextAppearance.Material3.BodyLarge">
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">15sp</item>
     </style>
 
     <style name="Theme.Flikk.Player">
