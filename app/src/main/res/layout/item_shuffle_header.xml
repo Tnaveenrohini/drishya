@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingHorizontal="20dp"
+    android:paddingTop="4dp"
+    android:paddingBottom="8dp">
+
+    <TextView
+        android:id="@+id/shuffle_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="46dp"
+        android:background="@drawable/bg_btn_white"
+        android:drawableStart="@drawable/ic_shuffle_black"
+        android:drawablePadding="8dp"
+        android:gravity="center"
+        android:paddingStart="18dp"
+        android:paddingEnd="22dp"
+        android:textColor="#000000"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+</FrameLayout>

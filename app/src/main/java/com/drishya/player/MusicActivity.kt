@@ -65,6 +65,8 @@ class MusicActivity : AppCompatActivity() {
     private lateinit var dur: TextView
     private lateinit var timeBar: DefaultTimeBar
     private lateinit var playBtn: ImageButton
+    private lateinit var favBtn: ImageButton
+    private var noArt = true
     private lateinit var shuffleBtn: ImageButton
     private lateinit var repeatBtn: ImageButton
 
@@ -117,6 +119,35 @@ class MusicActivity : AppCompatActivity() {
         artist.isSelected = true
 
         playBtn.setOnClickListener { togglePlay() }
+        findViewById<View>(R.id.m_close).setOnClickListener { finish() }
+        findViewById<View>(R.id.m_sleep).setOnClickListener { sleepDialog() }
+        findViewById<View>(R.id.m_eq).setOnClickListener { eqDialog() }
+        favBtn = findViewById(R.id.m_fav)
+        favBtn.setOnClickListener {
+            val id = player?.currentMediaItem?.mediaId ?: return@setOnClickListener
+            Library.toggleFavourite(this, id)
+            updateFav()
+        }
+        // Record meeda swipe: left = next, right = previous, kindaki = close
+        val swipe = android.view.GestureDetector(this, object : android.view.GestureDetector.SimpleOnGestureListener() {
+            override fun onDown(e: android.view.MotionEvent) = true
+            override fun onFling(e1: android.view.MotionEvent?, e2: android.view.MotionEvent, vx: Float, vy: Float): Boolean {
+                val start = e1 ?: return false
+                val dx = e2.rawX - start.rawX
+                val dy = e2.rawY - start.rawY
+                val p = player ?: return false
+                if (kotlin.math.abs(dx) > kotlin.math.abs(dy) && kotlin.math.abs(dx) > dp(60)) {
+                    if (dx < 0) p.seekToNextMediaItem() else p.seekToPreviousMediaItem()
+                    return true
+                }
+                if (dy > dp(120) && kotlin.math.abs(dy) > kotlin.math.abs(dx)) {
+                    finish()
+                    return true
+                }
+                return false
+            }
+        })
+        vinylBox.setOnTouchListener { _, ev -> swipe.onTouchEvent(ev) }
         findViewById<View>(R.id.m_prev).setOnClickListener {
             val p = player ?: return@setOnClickListener
             if (p.currentPosition > 3000 || !p.hasPreviousMediaItem()) p.seekTo(0) else p.seekToPreviousMediaItem()
@@ -284,25 +315,43 @@ class MusicActivity : AppCompatActivity() {
             ?: getString(R.string.unknown_artist)
         if (title.text.toString() != t) title.text = t
         if (artist.text.toString() != a) artist.text = a
-        bigTitle.text = t
+        if (bigTitle.text.toString() != t) bigTitle.text = t
+        bigTitle.isSelected = true
         bigArtist.text = a
+        updateFav()
         val bytes = m.artworkData
         val bmp = bytes?.let {
             try { BitmapFactory.decodeByteArray(it, 0, it.size) } catch (_: Throwable) { null }
         }
         if (bmp != null) {
+            noArt = false
             setArt(smallArt, bmp, 0)
             setArt(bigArt, bmp, 0)
             bgArt.setImageBitmap(blur(bmp))
         } else {
-            // Album art lekapothe: dark tile lo chinna music icon (double border lekunda)
+            noArt = true
             setArt(smallArt, null, dp(16))
-            setArt(bigArt, null, dp(72))
+            if (vinylOn()) {
+                // Art lekapothe: Flikk label unna vinyl record
+                bigArt.setPadding(0, 0, 0, 0)
+                bigArt.scaleType = ImageView.ScaleType.FIT_CENTER
+                bigArt.imageTintList = null
+                bigArt.setImageResource(R.drawable.art_vinyl_label)
+            } else {
+                setArt(bigArt, null, dp(72))
+            }
             bgArt.setImageDrawable(null)
         }
+        vinylHole.visibility = if (vinylOn() && !noArt) View.VISIBLE else View.GONE
     }
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
+
+    private fun updateFav() {
+        val id = player?.currentMediaItem?.mediaId ?: return
+        val on = Library.isFavourite(this, id)
+        favBtn.setImageResource(if (on) R.drawable.ic_favorite else R.drawable.ic_favorite_border)
+    }
 
     // ---------------------------------------------------------------- vinyl spin
 
@@ -319,7 +368,7 @@ class MusicActivity : AppCompatActivity() {
         bigArt.outlineProvider = if (on) roundOutline else android.view.ViewOutlineProvider.BACKGROUND
         bigArt.invalidateOutline()
         vinylRings.visibility = if (on) View.VISIBLE else View.GONE
-        vinylHole.visibility = if (on) View.VISIBLE else View.GONE
+        vinylHole.visibility = if (on && !noArt) View.VISIBLE else View.GONE
         if (!on) {
             spin?.cancel()
             spin = null
@@ -434,10 +483,7 @@ class MusicActivity : AppCompatActivity() {
                 total += di
                 if (i < cur) before += di
             }
-            pill.text = getString(
-                R.string.music_progress, cur + 1, count,
-                formatTime(before + position), formatTime(total)
-            )
+            pill.text = getString(R.string.track_of, cur + 1, count, formatTime(total))
         }
     }
 
@@ -562,6 +608,7 @@ class MusicActivity : AppCompatActivity() {
                     R.id.mm_vinyl -> {
                         vinylPrefs.edit().putBoolean("vinyl", !vinylOn()).apply()
                         applyVinyl()
+                        refreshNowPlaying()
                     }
                     R.id.mm_sleep -> sleepDialog()
                     R.id.mm_eq -> eqDialog()

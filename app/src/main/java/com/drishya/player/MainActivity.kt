@@ -159,7 +159,7 @@ class MainActivity : AppCompatActivity() {
         allowBtn.setOnClickListener { requestPermission() }
         onBackPressedDispatcher.addCallback(this, backCallback)
         btnBack.setOnClickListener { goBack() }
-        btnMenu.setOnClickListener { showHomeMenu(it) }
+        btnMenu.setOnClickListener { if (section == Section.MUSIC) showMusicMenu(it) else showHomeMenu(it) }
         btnSelect.setOnClickListener { startSelecting(null) }
         btnSearch.setOnClickListener { toggleSearch() }
         findViewById<View>(R.id.sel_cancel).setOnClickListener { stopSelecting() }
@@ -433,7 +433,7 @@ class MainActivity : AppCompatActivity() {
         btnBack.visibility = if (inside) View.VISIBLE else View.GONE
         val local = section == Section.LOCAL
         btnSelect.visibility = if ((local && (tab == 0 || tab == 3 || inside)) || privateOpen) View.VISIBLE else View.GONE
-        btnMenu.visibility = if (local) View.VISIBLE else View.GONE
+        btnMenu.visibility = if (local || section == Section.MUSIC) View.VISIBLE else View.GONE
         btnSearch.visibility = if (section == Section.LOCAL || section == Section.MUSIC) View.VISIBLE else View.GONE
         val music = section == Section.MUSIC
         if (local || music) setupTabs(music)
@@ -717,6 +717,7 @@ class MainActivity : AppCompatActivity() {
             R.string.paused_at,
             formatTime(resumePrefs.getLong(last.uri.toString(), 0L))
         )
+        thumbMode(true)
         Glide.with(miniThumb).load(last.uri).centerCrop().into(miniThumb)
         val open = View.OnClickListener { openPlayer(listOf(last), 0) }
         miniBar.setOnClickListener(open)
@@ -969,18 +970,51 @@ class MainActivity : AppCompatActivity() {
         }
         val album = openAlbum
         val artist = openArtist
+        val tracks = musicTracks()
         when {
-            album != null -> showSongs(allTracks.filter { albumOf(it) == album }, q)
-            artist != null -> showSongs(allTracks.filter { artistOf(it) == artist }, q)
-            q.isNotEmpty() || musicTab == 0 -> showSongs(allTracks, q)
-            musicTab == 1 -> showGroups(allTracks.groupBy { albumOf(it) }, R.drawable.ic_library) { name ->
+            album != null -> showSongs(tracks.filter { albumOf(it) == album }, q)
+            artist != null -> showSongs(tracks.filter { artistOf(it) == artist }, q)
+            q.isNotEmpty() || musicTab == 0 -> showSongs(tracks, q)
+            musicTab == 1 -> showGroups(tracks.groupBy { albumOf(it) }, R.drawable.ic_library) { name ->
                 openAlbum = name
                 render()
             }
-            else -> showGroups(allTracks.groupBy { artistOf(it) }, R.drawable.ic_person) { name ->
+            else -> showGroups(tracks.groupBy { artistOf(it) }, R.drawable.ic_person) { name ->
                 openArtist = name
                 render()
             }
+        }
+    }
+
+    private fun showAllAudio() = settings.getBoolean("all_audio", false)
+
+    private val junkWords = listOf("call", "record", "voice", "whatsapp audio", "ptt-", "aud-", "opus")
+
+    /** Call recordings, voice notes, 30 sec kanna chinna clips ni songs list nunchi dachu. */
+    private fun musicTracks(): List<Track> {
+        if (showAllAudio()) return allTracks
+        return allTracks.filter { t ->
+            val title = t.title.lowercase()
+            val album = t.album.lowercase()
+            val phoneLike = title.trimStart('+').take(6).all { it.isDigit() }
+            t.durationMs >= 30_000L && !phoneLike &&
+                junkWords.none { w -> title.contains(w) || album.contains(w) }
+        }
+    }
+
+    private fun letterOf(s: String): String =
+        s.firstOrNull { it.isLetterOrDigit() }?.uppercaseChar()?.toString() ?: "♪"
+
+    private fun showMusicMenu(anchor: View) {
+        PopupMenu(this, anchor).apply {
+            menu.add(0, 1, 0, R.string.show_all_audio).isCheckable = true
+            menu.findItem(1).isChecked = showAllAudio()
+            setOnMenuItemClickListener {
+                settings.edit().putBoolean("all_audio", !showAllAudio()).apply()
+                render()
+                true
+            }
+            show()
         }
     }
 
@@ -1000,14 +1034,25 @@ class MainActivity : AppCompatActivity() {
         }
         hideEmpty()
         subTitle.text = getString(R.string.count_songs, list.size)
-        recycler.adapter = RowAdapter(list.mapIndexed { i, t ->
-            Row(t.title, "${artistOf(t)} · ${formatTime(t.durationMs)}", R.drawable.ic_music, onClick = {
-                launchPlayer(
-                    list.map { it.uri.toString() }, list.map { it.title }, i,
-                    audio = true, artists = list.map { it.artist }, durations = list.map { it.durationMs },
-                )
-            })
+        val nowId = PlayerHolder.peek()?.currentMediaItem?.mediaId
+        fun play(l: List<Track>, i: Int) = launchPlayer(
+            l.map { it.uri.toString() }, l.map { it.title }, i,
+            audio = true, artists = l.map { it.artist }, durations = l.map { it.durationMs },
+        )
+        val rows = RowAdapter(list.mapIndexed { i, t ->
+            Row(
+                t.title, "${artistOf(t)} · ${formatTime(t.durationMs)}", R.drawable.ic_music,
+                onClick = { play(list, i) },
+                letter = letterOf(t.title),
+                playing = t.uri.toString() == nowId,
+            )
         })
+        recycler.adapter = if (list.size > 1) {
+            androidx.recyclerview.widget.ConcatAdapter(
+                ShuffleHeaderAdapter(getString(R.string.shuffle_all, list.size)) { play(list.shuffled(), 0) },
+                rows,
+            )
+        } else rows
     }
 
     private fun showGroups(groups: Map<String, List<Track>>, icon: Int, open: (String) -> Unit) {
@@ -1159,6 +1204,13 @@ class MainActivity : AppCompatActivity() {
         d.window?.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
     }
 
+    private fun thumbMode(real: Boolean) {
+        val pad = if (real) 0 else (12 * resources.displayMetrics.density).toInt()
+        miniThumb.setPadding(pad, pad, pad, pad)
+        miniThumb.scaleType = if (real) ImageView.ScaleType.CENTER_CROP else ImageView.ScaleType.FIT_CENTER
+        miniThumb.imageTintList = if (real) null else android.content.res.ColorStateList.valueOf(0xFFBDBDBD.toInt())
+    }
+
     /** Music tab lo "ippudu play avuthunna paata" bar — tap chesthe music screen. */
     private fun updateMusicBar() {
         val p = PlayerHolder.peek()
@@ -1172,13 +1224,20 @@ class MainActivity : AppCompatActivity() {
         miniSub.text = item.mediaMetadata.artist ?: getString(R.string.now_playing)
         val art = p.mediaMetadata.artworkData
         if (art != null) {
+            thumbMode(true)
             miniThumb.setImageBitmap(android.graphics.BitmapFactory.decodeByteArray(art, 0, art.size))
         } else {
+            // Art lekapothe: box lo pattetattu chinna music icon
+            thumbMode(false)
             miniThumb.setImageResource(R.drawable.ic_music)
         }
-        val open = View.OnClickListener { startActivity(Intent(this, MusicActivity::class.java)) }
-        miniBar.setOnClickListener(open)
-        findViewById<ImageButton>(R.id.mini_play).setOnClickListener(open)
+        miniBar.setOnClickListener { startActivity(Intent(this, MusicActivity::class.java)) }
+        val playBtn = findViewById<ImageButton>(R.id.mini_play)
+        playBtn.setImageResource(if (p.playWhenReady) R.drawable.ic_pause else R.drawable.ic_play)
+        playBtn.setOnClickListener {
+            if (p.playWhenReady) p.pause() else p.play()
+            playBtn.setImageResource(if (p.playWhenReady) R.drawable.ic_pause else R.drawable.ic_play)
+        }
     }
 
     // ------------------------------------------------------------ Me (settings)

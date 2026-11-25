@@ -215,4 +215,9 @@
     <string name="see_all">அனைத்தும் பார்</string>
     <string name="hero_continue">தொடர்ந்து பார்க்க · %1$d%%</string>
     <string name="info_added">சேர்த்த தேதி</string>
+    <string name="shuffle_all">%1$d பாடல்கள் ஷஃபிள்</string>
+    <string name="show_all_audio">அனைத்து ஆடியோவையும் காட்டு (பதிவுகள், குரல் குறிப்புகள்)</string>
+    <string name="now_playing_caps">இப்போது இயங்குகிறது</string>
+    <string name="track_of">பாடல் %1$d / %2$d · மொத்தம் %3$s</string>
+    <string name="close">மூடு</string>
 </resources>

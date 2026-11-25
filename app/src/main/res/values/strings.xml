@@ -236,4 +236,9 @@
     <string name="see_all">See all</string>
     <string name="hero_continue">CONTINUE WATCHING · %1$d%%</string>
     <string name="info_added">Added</string>
+    <string name="shuffle_all">Shuffle %1$d songs</string>
+    <string name="show_all_audio">Show all audio (recordings, voice notes)</string>
+    <string name="now_playing_caps">NOW PLAYING</string>
+    <string name="track_of">Track %1$d of %2$d · %3$s total</string>
+    <string name="close">Close</string>
 </resources>

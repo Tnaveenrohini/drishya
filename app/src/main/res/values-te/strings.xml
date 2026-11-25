@@ -229,4 +229,9 @@
     <string name="see_all">అన్నీ చూడు</string>
     <string name="hero_continue">కొనసాగించండి · %1$d%%</string>
     <string name="info_added">జోడించిన తేదీ</string>
+    <string name="shuffle_all">%1$d పాటలు షఫుల్</string>
+    <string name="show_all_audio">అన్ని ఆడియోలు చూపించు (రికార్డింగ్స్, వాయిస్ నోట్స్)</string>
+    <string name="now_playing_caps">ఇప్పుడు ప్లే అవుతోంది</string>
+    <string name="track_of">పాట %1$d / %2$d · మొత్తం %3$s</string>
+    <string name="close">మూసివేయి</string>
 </resources>

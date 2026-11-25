@@ -215,4 +215,9 @@
     <string name="see_all">सब देखें</string>
     <string name="hero_continue">देखना जारी रखें · %1$d%%</string>
     <string name="info_added">जोड़ा गया</string>
+    <string name="shuffle_all">%1$d गाने शफ़ल</string>
+    <string name="show_all_audio">सभी ऑडियो दिखाएँ (रिकॉर्डिंग, वॉइस नोट्स)</string>
+    <string name="now_playing_caps">अभी चल रहा है</string>
+    <string name="track_of">गाना %1$d / %2$d · कुल %3$s</string>
+    <string name="close">बंद करें</string>
 </resources>

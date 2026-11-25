@@ -103,6 +103,8 @@ data class Row(
     val icon: Int,
     val onClick: () -> Unit,
     val onLongClick: (() -> Unit)? = null,
+    val letter: String? = null,      // album art badulu pedda letter
+    val playing: Boolean = false,    // ippudu play avuthunna paata
 )
 
 class RowAdapter(private val rows: List<Row>) : RecyclerView.Adapter<RowAdapter.VH>() {
@@ -111,6 +113,7 @@ class RowAdapter(private val rows: List<Row>) : RecyclerView.Adapter<RowAdapter.
         val icon: ImageView = v.findViewById(R.id.row_icon)
         val name: TextView = v.findViewById(R.id.row_name)
         val sub: TextView = v.findViewById(R.id.row_sub)
+        val letter: TextView = v.findViewById(R.id.row_letter)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
@@ -123,7 +126,26 @@ class RowAdapter(private val rows: List<Row>) : RecyclerView.Adapter<RowAdapter.
         h.name.text = r.name
         h.sub.text = r.sub
         h.sub.visibility = if (r.sub.isEmpty()) View.GONE else View.VISIBLE
-        h.icon.setImageResource(r.icon)
+        when {
+            r.playing -> {
+                h.letter.visibility = View.GONE
+                h.icon.setImageResource(R.drawable.ic_equalizer)
+                h.icon.setBackgroundResource(R.drawable.bg_chip_on)
+                h.icon.imageTintList = android.content.res.ColorStateList.valueOf(0xFF000000.toInt())
+            }
+            r.letter != null -> {
+                h.icon.setImageDrawable(null)
+                h.icon.setBackgroundResource(R.drawable.bg_card)
+                h.letter.visibility = View.VISIBLE
+                h.letter.text = r.letter
+            }
+            else -> {
+                h.letter.visibility = View.GONE
+                h.icon.setBackgroundResource(R.drawable.bg_card)
+                h.icon.imageTintList = android.content.res.ColorStateList.valueOf(0xFFFFFFFF.toInt())
+                h.icon.setImageResource(r.icon)
+            }
+        }
         h.itemView.setOnClickListener { r.onClick() }
         val long = r.onLongClick
         if (long != null) {
@@ -499,5 +521,23 @@ class QuickLinksAdapter(
             t.text = labels[i]
             t.setOnClickListener { onClick(i) }
         }
+    }
+}
+
+
+/** Music list paina "Shuffle all" pedda button. */
+class ShuffleHeaderAdapter(private val label: String, private val onClick: () -> Unit) :
+    RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
+        object : RecyclerView.ViewHolder(
+            LayoutInflater.from(parent.context).inflate(R.layout.item_shuffle_header, parent, false)
+        ) {}
+
+    override fun getItemCount() = 1
+
+    override fun onBindViewHolder(h: RecyclerView.ViewHolder, position: Int) {
+        val b = h.itemView.findViewById<TextView>(R.id.shuffle_btn)
+        b.text = label
+        b.setOnClickListener { onClick() }
     }
 }

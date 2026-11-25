@@ -1,0 +1,14 @@
+<!-- Album art lekapothe: vinyl record, madhyalo white label meeda kk logo -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="300dp" android:height="300dp" android:viewportWidth="100" android:viewportHeight="100">
+    <path android:fillColor="#141414" android:pathData="M50,0a50,50 0,1 1,0 100a50,50 0,1 1,0 -100z" />
+    <path android:strokeColor="#262626" android:strokeWidth="0.5" android:fillColor="#00000000" android:pathData="M50,4a46,46 0,1 1,0 92a46,46 0,1 1,0 -92z" />
+    <path android:strokeColor="#202020" android:strokeWidth="0.5" android:fillColor="#00000000" android:pathData="M50,9a41,41 0,1 1,0 82a41,41 0,1 1,0 -82z" />
+    <path android:strokeColor="#262626" android:strokeWidth="0.5" android:fillColor="#00000000" android:pathData="M50,14a36,36 0,1 1,0 72a36,36 0,1 1,0 -72z" />
+    <path android:strokeColor="#202020" android:strokeWidth="0.5" android:fillColor="#00000000" android:pathData="M50,19a31,31 0,1 1,0 62a31,31 0,1 1,0 -62z" />
+    <path android:strokeColor="#262626" android:strokeWidth="0.5" android:fillColor="#00000000" android:pathData="M50,24a26,26 0,1 1,0 52a26,26 0,1 1,0 -52z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M50,31a19,19 0,1 1,0 38a19,19 0,1 1,0 -38z" />
+    <group android:translateX="40" android:translateY="40" android:scaleX="0.48" android:scaleY="0.48">
+        <path android:strokeColor="#000000" android:strokeWidth="4.96" android:strokeLineCap="round" android:strokeLineJoin="round" android:fillColor="#00000000"
+            android:pathData="M8.91,11.08L8.91,30.92M15.73,12.94L23.79,21L15.73,29.06M25.03,12.94L33.09,21L25.03,29.06" />
+    </group>
+</vector>
