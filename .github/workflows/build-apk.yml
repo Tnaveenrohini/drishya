@@ -49,7 +49,8 @@ jobs:
         run: |
           cp app/build/outputs/apk/release/app-release.apk FlikkPlay.apk
           echo "Signing certificate:"
-          keytool -printcert -jarfile FlikkPlay.apk | grep -E "Owner|SHA256"
+          APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          "$APKSIGNER" verify --print-certs FlikkPlay.apk | grep -E "DN|SHA-256" || true
           VER=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
           echo "APP_VERSION=$VER" >> "$GITHUB_ENV"
 
