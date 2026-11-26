@@ -132,6 +132,7 @@ class MainActivity : AppCompatActivity() {
         ThemeColors.apply(this)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        UiKit.fitSystemBars(findViewById<android.view.ViewGroup>(android.R.id.content).getChildAt(0))
         header = findViewById(R.id.header)
         selHeader = findViewById(R.id.sel_header)
         selCount = findViewById(R.id.sel_count)

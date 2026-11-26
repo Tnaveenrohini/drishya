@@ -12,19 +12,28 @@ android {
     defaultConfig {
         applicationId = "com.flikk.player"
         minSdk = 26
-        targetSdk = 34
-        versionCode = 18
-        versionName = "2.5.0"
+        targetSdk = 36
+        versionCode = 19
+        versionName = "2.5.1"
     }
 
-    // Fixed key: prathi kotha build paata app meedha update ga install avthundi.
-    // Play Store ki vellettappudu private key vaadandi (ee file public repo lo undi).
+    // Signing: GitHub Secrets lo unna private key (FLIKK_KEYSTORE_FILE set aithe).
+    // Secrets lekapothe matrame paata public key (testing kosam) — Play Store ki kaadu.
+    val ksPath = System.getenv("FLIKK_KEYSTORE_FILE")
+    val ksPass = System.getenv("FLIKK_KEY_PASSWORD")
     signingConfigs {
         create("flikk") {
-            storeFile = file("flikk.keystore")
-            storePassword = "flikk123"
-            keyAlias = "flikk"
-            keyPassword = "flikk123"
+            if (!ksPath.isNullOrBlank() && !ksPass.isNullOrBlank()) {
+                storeFile = file(ksPath)
+                storePassword = ksPass
+                keyAlias = "flikkplay"
+                keyPassword = ksPass
+            } else {
+                storeFile = file("flikk.keystore")
+                storePassword = "flikk123"
+                keyAlias = "flikk"
+                keyPassword = "flikk123"
+            }
         }
     }
 

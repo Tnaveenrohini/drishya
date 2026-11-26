@@ -90,6 +90,7 @@ class MusicActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_music)
+        UiKit.fitSystemBars(findViewById<android.view.ViewGroup>(android.R.id.content).getChildAt(0))
         bgArt = findViewById(R.id.bg_art)
         smallArt = findViewById(R.id.small_art)
         bigArt = findViewById(R.id.big_art)

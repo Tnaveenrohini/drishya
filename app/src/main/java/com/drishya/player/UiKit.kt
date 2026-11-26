@@ -12,6 +12,27 @@ import com.bumptech.glide.Glide
 
 /** App style lo Info card: thumbnail (optional), title, label · value rows. */
 object UiKit {
+    /**
+     * Android 15+ (target 35/36) lo app status bar / nav bar venaka draw avuthundi.
+     * Root ki aa bars + keyboard antha padding ivvu, content dachukokunda.
+     */
+    fun fitSystemBars(root: View) {
+        val l = root.paddingLeft
+        val t = root.paddingTop
+        val r = root.paddingRight
+        val b = root.paddingBottom
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
+            val bars = insets.getInsets(
+                androidx.core.view.WindowInsetsCompat.Type.systemBars() or
+                    androidx.core.view.WindowInsetsCompat.Type.displayCutout()
+            )
+            val ime = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.ime())
+            v.setPadding(l + bars.left, t + bars.top, r + bars.right, b + maxOf(bars.bottom, ime.bottom))
+            insets
+        }
+        androidx.core.view.ViewCompat.requestApplyInsets(root)
+    }
+
     fun infoView(
         c: Context,
         title: String,

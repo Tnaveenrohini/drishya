@@ -20,7 +20,21 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      - name: Decode signing key
+        env:
+          KS: ${{ secrets.FLIKK_KEYSTORE }}
+        run: |
+          if [ -n "$KS" ]; then
+            echo "$KS" | base64 -d > "$RUNNER_TEMP/flikkplay.p12"
+            echo "FLIKK_KEYSTORE_FILE=$RUNNER_TEMP/flikkplay.p12" >> "$GITHUB_ENV"
+            echo "Signing with private release key"
+          else
+            echo "::warning::FLIKK_KEYSTORE secret ledu - paata test key tho sign avuthundi"
+          fi
+
       - name: Build APK
+        env:
+          FLIKK_KEY_PASSWORD: ${{ secrets.FLIKK_KEY_PASSWORD }}
         run: |
           chmod +x ./gradlew
           ./gradlew assembleRelease --no-daemon --stacktrace
