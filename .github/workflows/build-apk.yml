@@ -29,7 +29,8 @@ jobs:
             echo "FLIKK_KEYSTORE_FILE=$RUNNER_TEMP/flikkplay.p12" >> "$GITHUB_ENV"
             echo "Signing with private release key"
           else
-            echo "::warning::FLIKK_KEYSTORE secret ledu - paata test key tho sign avuthundi"
+            echo "::error::FLIKK_KEYSTORE secret ledu - Settings > Secrets lo add cheyyandi"
+            exit 1
           fi
 
       - name: Build APK
@@ -47,6 +48,8 @@ jobs:
       - name: Rename APK
         run: |
           cp app/build/outputs/apk/release/app-release.apk FlikkPlay.apk
+          echo "Signing certificate:"
+          keytool -printcert -jarfile FlikkPlay.apk | grep -E "Owner|SHA256"
           VER=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
           echo "APP_VERSION=$VER" >> "$GITHUB_ENV"
 

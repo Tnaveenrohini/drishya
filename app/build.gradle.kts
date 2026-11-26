@@ -13,37 +13,33 @@ android {
         applicationId = "com.flikk.player"
         minSdk = 26
         targetSdk = 36
-        versionCode = 19
-        versionName = "2.5.1"
+        versionCode = 20
+        versionName = "2.5.2"
     }
 
-    // Signing: GitHub Secrets lo unna private key (FLIKK_KEYSTORE_FILE set aithe).
-    // Secrets lekapothe matrame paata public key (testing kosam) — Play Store ki kaadu.
+    // Signing: GitHub Secrets lo unna private release key matrame (repo lo key ledu).
     val ksPath = System.getenv("FLIKK_KEYSTORE_FILE")
     val ksPass = System.getenv("FLIKK_KEY_PASSWORD")
+    val hasKey = !ksPath.isNullOrBlank() && !ksPass.isNullOrBlank()
     signingConfigs {
-        create("flikk") {
-            if (!ksPath.isNullOrBlank() && !ksPass.isNullOrBlank()) {
-                storeFile = file(ksPath)
+        if (hasKey) {
+            create("flikk") {
+                storeFile = file(ksPath!!)
                 storePassword = ksPass
                 keyAlias = "flikkplay"
                 keyPassword = ksPass
-            } else {
-                storeFile = file("flikk.keystore")
-                storePassword = "flikk123"
-                keyAlias = "flikk"
-                keyPassword = "flikk123"
             }
         }
     }
 
     buildTypes {
         debug {
-            signingConfig = signingConfigs.getByName("flikk")
+            if (hasKey) signingConfig = signingConfigs.getByName("flikk")
         }
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("flikk")
+            if (hasKey) signingConfig = signingConfigs.getByName("flikk")
+            else logger.warn("FLIKK_KEYSTORE / FLIKK_KEY_PASSWORD secrets levu: release APK sign avvadu")
         }
     }
 
