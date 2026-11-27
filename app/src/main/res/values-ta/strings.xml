@@ -236,4 +236,10 @@
     <string name="phone_effects">போன் ஒலி விளைவுகள்</string>
     <string name="phone_effects_sub">உங்கள் போனின் Dolby Atmos &amp; ஆடியோ அமைப்புகள்</string>
     <string name="phone_effects_none">இந்த போனில் ஒலி விளைவு பலகம் இல்லை</string>
+    <string name="track">டிராக்</string>
+    <string name="private_locked">பல முறை தவறு. %1$d வினாடிகளில் மீண்டும் முயலவும்</string>
+    <string name="cast_to">காஸ்ட் செய்</string>
+    <string name="cast_devices_wifi">உங்கள் Wi-Fi சாதனங்கள்</string>
+    <string name="cast_searching">TV-களைத் தேடுகிறது…</string>
+    <string name="cast_connected">%1$s · இணைக்கப்பட்டது</string>
 </resources>

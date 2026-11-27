@@ -257,4 +257,10 @@
     <string name="phone_effects">Phone sound effects</string>
     <string name="phone_effects_sub">Dolby Atmos &amp; audio settings on your phone</string>
     <string name="phone_effects_none">No sound effects panel on this phone</string>
+    <string name="track">Track</string>
+    <string name="private_locked">Too many tries. Try again in %1$d s</string>
+    <string name="cast_to">Cast to</string>
+    <string name="cast_devices_wifi">Devices on your Wi-Fi</string>
+    <string name="cast_searching">Searching for TVs…</string>
+    <string name="cast_connected">%1$s · Connected</string>
 </resources>

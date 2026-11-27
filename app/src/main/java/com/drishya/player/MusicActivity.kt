@@ -66,6 +66,9 @@ class MusicActivity : AppCompatActivity() {
     private lateinit var timeBar: DefaultTimeBar
     private lateinit var playBtn: ImageButton
     private lateinit var favBtn: ImageButton
+    private lateinit var eqBars: EqBarsView
+    private lateinit var segTrack: TextView
+    private lateinit var segQueue: TextView
     private var noArt = true
     private lateinit var shuffleBtn: ImageButton
     private lateinit var repeatBtn: ImageButton
@@ -121,8 +124,17 @@ class MusicActivity : AppCompatActivity() {
 
         playBtn.setOnClickListener { togglePlay() }
         findViewById<View>(R.id.m_close).setOnClickListener { finish() }
-        findViewById<View>(R.id.m_sleep).setOnClickListener { sleepDialog() }
-        findViewById<View>(R.id.m_eq).setOnClickListener { eqDialog() }
+        eqBars = findViewById(R.id.m_eqbars)
+        segTrack = findViewById(R.id.m_seg_track)
+        segQueue = findViewById(R.id.m_seg_queue)
+        segTrack.setOnClickListener {
+            showQueue = false
+            refreshPanels()
+        }
+        segQueue.setOnClickListener {
+            showQueue = true
+            refreshPanels()
+        }
         favBtn = findViewById(R.id.m_fav)
         favBtn.setOnClickListener {
             val id = player?.currentMediaItem?.mediaId ?: return@setOnClickListener
@@ -305,6 +317,13 @@ class MusicActivity : AppCompatActivity() {
             if (showQueue) 0xFFFFFFFF.toInt() else 0xFF9A9A9A.toInt()
         )
         if (showQueue) fillQueue()
+        // Track / Queue pill: select ayinadi white
+        segTrack.setBackgroundResource(if (showQueue) 0 else R.drawable.bg_btn_white)
+        segQueue.setBackgroundResource(if (showQueue) R.drawable.bg_btn_white else 0)
+        segTrack.setTextColor(if (showQueue) 0xFFFFFFFF.toInt() else 0xFF000000.toInt())
+        segQueue.setTextColor(if (showQueue) 0xFF000000.toInt() else 0xFFFFFFFF.toInt())
+        segTrack.setTypeface(null, if (showQueue) android.graphics.Typeface.NORMAL else android.graphics.Typeface.BOLD)
+        segQueue.setTypeface(null, if (showQueue) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
     }
 
     private fun refreshNowPlaying() {
@@ -417,7 +436,9 @@ class MusicActivity : AppCompatActivity() {
     }
 
     private fun updatePlayIcon() {
-        playBtn.setImageResource(if (player?.isPlaying == true) R.drawable.ic_pause else R.drawable.ic_play)
+        val playing = player?.isPlaying == true
+        playBtn.setImageResource(if (playing) R.drawable.ic_pause else R.drawable.ic_play)
+        if (::eqBars.isInitialized && eqBars.playing != playing) eqBars.playing = playing
     }
 
     private fun togglePlay() {
@@ -604,6 +625,10 @@ class MusicActivity : AppCompatActivity() {
         PopupMenu(this, anchor).apply {
             menuInflater.inflate(R.menu.music_more, menu)
             menu.findItem(R.id.mm_vinyl)?.isChecked = vinylOn()
+            val curId = player?.currentMediaItem?.mediaId
+            if (curId != null && Library.isFavourite(this@MusicActivity, curId)) {
+                menu.findItem(R.id.mm_fav)?.setTitle(R.string.remove_favourite)
+            }
             setOnMenuItemClickListener {
                 when (it.itemId) {
                     R.id.mm_vinyl -> {
@@ -611,6 +636,11 @@ class MusicActivity : AppCompatActivity() {
                         applyVinyl()
                         refreshNowPlaying()
                     }
+                    R.id.mm_fav -> player?.currentMediaItem?.mediaId?.let { id ->
+                        Library.toggleFavourite(this@MusicActivity, id)
+                        updateFav()
+                    }
+                    R.id.mm_search -> findViewById<View>(R.id.m_search).performClick()
                     R.id.mm_sleep -> sleepDialog()
                     R.id.mm_eq -> eqDialog()
                     R.id.mm_boost -> boostDialog()

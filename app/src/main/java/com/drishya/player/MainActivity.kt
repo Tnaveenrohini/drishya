@@ -1073,7 +1073,7 @@ class MainActivity : AppCompatActivity() {
     private fun movePrivate(uris: List<String>) {
         if (!Privacy.hasPin(this)) {
             // Mundu PIN set cheyyali, lekapothe tirigi teyalemu
-            setPinDialog { movePrivate(uris) }
+            PinScreen(this, setMode = true) { movePrivate(uris) }.show()
             return
         }
         Privacy.add(this, uris)
@@ -1106,107 +1106,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun unlockPrivate() {
         if (!Privacy.hasPin(this)) {
-            setPinDialog { openPrivateNow() }
+            PinScreen(this, setMode = true) { openPrivateNow() }.show()
             return
         }
-        val auth = BiometricManager.Authenticators.BIOMETRIC_WEAK
-        val canBio = try {
-            BiometricManager.from(this).canAuthenticate(auth) == BiometricManager.BIOMETRIC_SUCCESS
-        } catch (_: Exception) {
-            false
-        }
-        if (!canBio) {
-            pinDialog()
-            return
-        }
-        val prompt = BiometricPrompt(this, ContextCompat.getMainExecutor(this),
-            object : BiometricPrompt.AuthenticationCallback() {
-                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                    openPrivateNow()
-                }
-
-                override fun onAuthenticationError(code: Int, msg: CharSequence) {
-                    if (code == BiometricPrompt.ERROR_NEGATIVE_BUTTON) pinDialog()
-                }
-            })
-        val info = BiometricPrompt.PromptInfo.Builder()
-            .setTitle(getString(R.string.private_folder))
-            .setSubtitle(getString(R.string.unlock_fingerprint))
-            .setNegativeButtonText(getString(R.string.use_pin))
-            .setAllowedAuthenticators(auth)
-            .build()
-        try {
-            prompt.authenticate(info)
-        } catch (_: Exception) {
-            pinDialog()
-        }
+        PinScreen(this, setMode = false) { openPrivateNow() }.show()
     }
 
-    private fun pinInput(): Pair<EditText, FrameLayout> {
-        val input = EditText(this).apply {
-            hint = "••••"
-            isSingleLine = true
-            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
-            filters = arrayOf(android.text.InputFilter.LengthFilter(4))
-            gravity = android.view.Gravity.CENTER
-            textSize = 24f
-        }
-        val pad = (20 * resources.displayMetrics.density).toInt()
-        val box = FrameLayout(this).apply {
-            setPadding(pad, pad / 2, pad, 0)
-            addView(input)
-        }
-        return input to box
-    }
-
-    private fun pinDialog() {
-        val (input, box) = pinInput()
-        val d = MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.private_enter_pin)
-            .setView(box)
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                if (Privacy.checkPin(this, input.text.toString())) openPrivateNow()
-                else toast(getString(R.string.private_wrong_pin))
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
-        input.requestFocus()
-        d.window?.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
-    }
-
-    private fun setPinDialog(onDone: () -> Unit) {
-        val (input, box) = pinInput()
-        val d = MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.private_set_pin)
-            .setMessage(R.string.private_note)
-            .setView(box)
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                val first = input.text.toString()
-                if (first.length != 4) {
-                    toast(getString(R.string.private_set_pin))
-                    return@setPositiveButton
-                }
-                val (again, box2) = pinInput()
-                MaterialAlertDialogBuilder(this)
-                    .setTitle(R.string.private_confirm_pin)
-                    .setView(box2)
-                    .setPositiveButton(android.R.string.ok) { _, _ ->
-                        if (again.text.toString() == first) {
-                            Privacy.setPin(this, first)
-                            onDone()
-                        } else {
-                            toast(getString(R.string.private_pin_mismatch))
-                        }
-                    }
-                    .setNegativeButton(R.string.cancel, null)
-                    .show()
-                    .window?.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
-        input.requestFocus()
-        d.window?.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
-    }
 
     private fun thumbMode(real: Boolean) {
         val pad = if (real) 0 else (12 * resources.displayMetrics.density).toInt()

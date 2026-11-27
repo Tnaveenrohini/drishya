@@ -236,4 +236,10 @@
     <string name="phone_effects">फ़ोन साउंड इफ़ेक्ट</string>
     <string name="phone_effects_sub">आपके फ़ोन के Dolby Atmos और ऑडियो सेटिंग</string>
     <string name="phone_effects_none">इस फ़ोन में साउंड इफ़ेक्ट पैनल नहीं है</string>
+    <string name="track">ट्रैक</string>
+    <string name="private_locked">बहुत बार गलत। %1$d सेकंड बाद फिर कोशिश करें</string>
+    <string name="cast_to">कास्ट करें</string>
+    <string name="cast_devices_wifi">आपके Wi-Fi के डिवाइस</string>
+    <string name="cast_searching">TV खोज रहे हैं…</string>
+    <string name="cast_connected">%1$s · कनेक्टेड</string>
 </resources>

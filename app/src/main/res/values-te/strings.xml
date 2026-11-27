@@ -250,4 +250,10 @@
     <string name="phone_effects">ఫోన్ సౌండ్ ఎఫెక్ట్స్</string>
     <string name="phone_effects_sub">మీ ఫోన్‌లో ఉన్న Dolby Atmos &amp; ఆడియో సెట్టింగ్స్</string>
     <string name="phone_effects_none">ఈ ఫోన్‌లో సౌండ్ ఎఫెక్ట్స్ ప్యానెల్ లేదు</string>
+    <string name="track">ట్రాక్</string>
+    <string name="private_locked">చాలా సార్లు తప్పు. %1$d సెకన్లలో మళ్ళీ ప్రయత్నించండి</string>
+    <string name="cast_to">కాస్ట్ చేయండి</string>
+    <string name="cast_devices_wifi">మీ Wi-Fi లో ఉన్న డివైజ్‌లు</string>
+    <string name="cast_searching">TVల కోసం వెతుకుతోంది…</string>
+    <string name="cast_connected">%1$s · కనెక్ట్ అయ్యింది</string>
 </resources>

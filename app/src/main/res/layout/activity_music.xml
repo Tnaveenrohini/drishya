@@ -91,12 +91,14 @@
             <ImageButton
                 android:id="@+id/m_search"
                 style="@style/PlayerIcon"
+                android:visibility="gone"
                 android:contentDescription="@string/search"
                 android:src="@drawable/ic_search" />
 
             <ImageButton
                 android:id="@+id/m_queue_btn"
                 style="@style/PlayerIcon"
+                android:visibility="gone"
                 android:contentDescription="@string/queue"
                 android:src="@drawable/ic_queue" />
 
@@ -217,7 +219,14 @@
                         android:padding="11dp"
                         android:scaleType="fitCenter"
                         android:src="@drawable/ic_favorite_border"
-                        android:tint="#FFFFFF" />
+                        android:tint="#FFFFFF"
+                        android:visibility="gone" />
+
+                    <com.drishya.player.EqBarsView
+                        android:id="@+id/m_eqbars"
+                        android:layout_width="40dp"
+                        android:layout_height="30dp"
+                        android:layout_marginEnd="4dp" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -362,39 +371,42 @@
 
         </LinearLayout>
 
-        <!-- Bottom: Track 6 of 104 · sleep · equalizer -->
+        <!-- Bottom: Track / Queue segmented pill -->
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginBottom="8dp"
-            android:gravity="center_vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="52dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="18dp"
+            android:background="@drawable/bg_segment"
             android:orientation="horizontal"
-            android:paddingStart="24dp"
-            android:paddingEnd="12dp">
+            android:padding="4dp">
 
             <TextView
-                android:id="@+id/m_pill"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:textColor="#8A8A8A"
-                android:textSize="13sp" />
+                android:id="@+id/m_seg_track"
+                android:layout_width="120dp"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_btn_white"
+                android:gravity="center"
+                android:text="@string/track"
+                android:textColor="#000000"
+                android:textSize="15sp"
+                android:textStyle="bold" />
 
-            <ImageButton
-                android:id="@+id/m_sleep"
-                style="@style/PlayerIcon"
-                android:contentDescription="@string/sleep_timer"
-                android:src="@drawable/ic_timer"
-                android:tint="#BDBDBD" />
-
-            <ImageButton
-                android:id="@+id/m_eq"
-                style="@style/PlayerIcon"
-                android:contentDescription="@string/equalizer"
-                android:src="@drawable/ic_equalizer"
-                android:tint="#BDBDBD" />
+            <TextView
+                android:id="@+id/m_seg_queue"
+                android:layout_width="120dp"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="@string/queue"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp" />
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/m_pill"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone" />
     </LinearLayout>
 </FrameLayout>

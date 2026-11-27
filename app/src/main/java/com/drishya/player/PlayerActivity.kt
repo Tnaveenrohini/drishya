@@ -2059,18 +2059,24 @@ class PlayerActivity : AppCompatActivity() {
         val ctx = castCtx ?: return
         val session = ctx.sessionManager.currentCastSession
         try {
-            if (session != null && session.isConnected) {
-                MediaRouteControllerDialog(this).show()
-            } else {
-                val selector = ctx.mergedSelector ?: return
-                MediaRouteChooserDialog(this).apply {
-                    routeSelector = selector
-                    show()
-                }
-            }
+            CastSheet(this, ctx,
+                onPrev = { castSkip(-1) },
+                onNext = { castSkip(1) },
+            ).show()
         } catch (_: Exception) {
             showHud(getString(R.string.fp_cast_failed), 2000)
         }
+    }
+
+    /** TV lo next / previous video: local playlist lo maari, TV ki kotha video pampu. */
+    private fun castSkip(dir: Int) {
+        val p = player ?: return
+        val s = castSession ?: return
+        if (dir > 0 && p.hasNextMediaItem()) p.seekToNextMediaItem()
+        else if (dir < 0 && p.hasPreviousMediaItem()) p.seekToPreviousMediaItem()
+        else return
+        p.pause()
+        startCasting(s)
     }
 
     private fun mimeOf(uri: Uri): String {
@@ -2131,6 +2137,9 @@ class PlayerActivity : AppCompatActivity() {
         p?.pause()
         val name = session.castDevice?.friendlyName ?: "TV"
         showHud(getString(R.string.fp_casting_to, name), 2500)
+        findViewById<View>(R.id.cast_overlay).visibility = View.VISIBLE
+        findViewById<TextView>(R.id.cast_label).text = getString(R.string.fp_casting_to, name)
+        com.bumptech.glide.Glide.with(this).load(uri).centerCrop().into(findViewById<ImageView>(R.id.cast_bg))
         showControls()
     }
 
@@ -2139,6 +2148,7 @@ class PlayerActivity : AppCompatActivity() {
         castSession = null
         LocalServer.stop()
         btnCast.setImageResource(R.drawable.ic_cast)
+        findViewById<View>(R.id.cast_overlay).visibility = View.GONE
         if (last > 0) player?.seekTo(last)
         showHud(getString(R.string.fp_cast_stopped), 1500)
         updatePlayIcon()
