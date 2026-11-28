@@ -123,6 +123,11 @@
             android:foregroundServiceType="dataSync" />
 
         <service
+            android:name=".SubtitleService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <service
             android:name=".TorrentService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />

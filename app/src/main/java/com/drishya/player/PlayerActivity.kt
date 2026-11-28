@@ -1065,6 +1065,8 @@ class PlayerActivity : AppCompatActivity() {
                 trackDialog(C.TRACK_TYPE_TEXT, R.string.subtitle_track)
             },
             iconTile(R.drawable.ic_add, getString(R.string.load_subtitles)) { pickSubtitle.launch(arrayOf("*/*")) },
+            iconTile(R.drawable.ic_ai, getString(R.string.ai_subs),
+                active = SubtitleService.state == SubtitleService.RUNNING) { aiSubtitlesDialog() },
             iconTile(R.drawable.ic_timer, getString(R.string.subtitle_delay)) { subtitleDelayDialog() },
         )).forEach { subs.addView(it) }
         c.addView(subs)
@@ -1729,6 +1731,119 @@ class PlayerActivity : AppCompatActivity() {
             .build()
         p.setMediaItems(list, idx, pos)
         p.prepare()
+    }
+
+    // ================================================================ AI subtitles
+
+    private var aiWatching: String? = null
+    private val aiWatch = object : Runnable {
+        override fun run() {
+            val id = aiWatching ?: return
+            when (SubtitleService.state) {
+                SubtitleService.DONE -> {
+                    aiWatching = null
+                    if (player?.currentMediaItem?.mediaId == id && AiSubs.has(this@PlayerActivity, id)) {
+                        attachSubtitle(Uri.fromFile(AiSubs.file(this@PlayerActivity, id)))
+                        showHud(getString(R.string.ai_ready), 2500)
+                    }
+                    return
+                }
+                SubtitleService.FAILED -> {
+                    aiWatching = null
+                    SubtitleService.error?.let { showHud(it, 3000) }
+                    return
+                }
+            }
+            handler.postDelayed(this, 2000)
+        }
+    }
+
+    private fun aiSubtitlesDialog() {
+        val id = player?.currentMediaItem?.mediaId ?: return
+        val title = player?.currentMediaItem?.mediaMetadata?.title?.toString() ?: ""
+        if (!WhisperLib.available) {
+            MaterialAlertDialogBuilder(this).setTitle(R.string.ai_subs)
+                .setMessage(R.string.ai_unsupported).setPositiveButton(android.R.string.ok, null).show()
+            return
+        }
+        if (SubtitleService.state == SubtitleService.RUNNING) {
+            showHud(getString(R.string.ai_working, SubtitleService.progress), 2000)
+            return
+        }
+        val langs = listOf("auto" to getString(R.string.ai_lang_auto), "en" to "English", "hi" to "हिन्दी",
+            "te" to "తెలుగు", "ta" to "தமிழ்", "bn" to "বাংলা", "mr" to "मराठी", "kn" to "ಕನ್ನಡ", "ml" to "മലയാളം")
+        val prefs = settings
+        var lang = prefs.getString("ai_lang", "auto") ?: "auto"
+        var model = prefs.getString("ai_model", "base") ?: "base"
+        var translate = false
+
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(22), dp(6), dp(22), 0)
+        }
+        fun label(t: String) = TextView(this).apply {
+            text = t.uppercase()
+            setTextColor(0xFF8A8A8A.toInt())
+            textSize = 11.5f
+            letterSpacing = 0.14f
+            setTypeface(typeface, Typeface.BOLD)
+            setPadding(0, dp(14), 0, dp(8))
+        }
+        val langBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        val modelBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        fun drawLang() {
+            langBox.removeAllViews()
+            chipGrid(langs.map { (code, name) -> chip(name, code == lang) { lang = code; drawLang() } }, 3)
+                .forEach { langBox.addView(it) }
+        }
+        fun drawModel() {
+            modelBox.removeAllViews()
+            val names = mapOf("tiny" to R.string.ai_fast, "base" to R.string.ai_better, "small" to R.string.ai_best)
+            chipGrid(ModelStore.models.map { m ->
+                val ok = if (ModelStore.ready(this, m)) " ✓" else " · ${m.sizeMb}MB"
+                chip(getString(names[m.id]!!) + ok, m.id == model) { model = m.id; drawModel() }
+            }, 3).forEach { modelBox.addView(it) }
+        }
+        drawLang()
+        drawModel()
+        box.addView(label(getString(R.string.ai_spoken)))
+        box.addView(langBox)
+        box.addView(label(getString(R.string.ai_quality)))
+        box.addView(modelBox)
+        val tr = com.google.android.material.materialswitch.MaterialSwitch(this).apply {
+            text = getString(R.string.ai_translate)
+            setTextColor(0xFFFFFFFF.toInt())
+            setOnCheckedChangeListener { _, c -> translate = c }
+        }
+        box.addView(tr, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52)).apply { topMargin = dp(10) })
+        box.addView(TextView(this).apply {
+            text = getString(R.string.ai_note)
+            setTextColor(0xFF8A8A8A.toInt())
+            textSize = 12f
+            setPadding(0, dp(6), 0, dp(4))
+        })
+        val scroll = android.widget.ScrollView(this).apply { addView(box) }
+        val b = MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.ai_subs)
+            .setView(scroll)
+            .setPositiveButton(R.string.ai_generate) { _, _ ->
+                prefs.edit().putString("ai_lang", lang).putString("ai_model", model).apply()
+                if (Build.VERSION.SDK_INT >= 33) notifPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                SubtitleService.start(this, id, title, model, lang, translate)
+                aiWatching = id
+                handler.removeCallbacks(aiWatch)
+                handler.postDelayed(aiWatch, 3000)
+                showHud(getString(R.string.ai_started), 2500)
+                closePanels()
+            }
+            .setNegativeButton(R.string.cancel, null)
+        if (AiSubs.has(this, id)) {
+            b.setNeutralButton(R.string.ai_use_saved) { _, _ ->
+                attachSubtitle(Uri.fromFile(AiSubs.file(this, id)))
+                closePanels()
+            }
+        }
+        b.show()
     }
 
     /** Subtitle file lo timings anni shift chesi kotha file ga load chestham. */

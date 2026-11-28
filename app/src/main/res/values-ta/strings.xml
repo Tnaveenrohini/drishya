@@ -291,4 +291,26 @@
     <string name="tr_no_media">இந்த டொரன்டில் வீடியோ / ஆடியோ கோப்பு இல்லை</string>
     <string name="tr_title">டொரன்ட்ஸ்</string>
     <string name="tr_notif">%1$d பதிவிறக்கம் · %2$d%% · %3$s/s</string>
+    <string name="ai_subs">AI வசனங்கள்</string>
+    <string name="ai_unsupported">AI வசனங்களுக்கு 64-bit போன் தேவை.</string>
+    <string name="ai_model_failed">AI மாடல் பதிவிறக்கம் தோல்வி. இணையத்தைச் சரிபார்த்து மீண்டும் முயலவும்.</string>
+    <string name="ai_model_dl">AI மாடல் பதிவிறக்கம்… %1$d%%</string>
+    <string name="ai_loading">AI மாடல் ஏற்றப்படுகிறது…</string>
+    <string name="ai_working">வசனங்கள் உருவாகின்றன… %1$d%%</string>
+    <string name="ai_audio_failed">இந்த வீடியோவின் ஆடியோவைப் படிக்க முடியவில்லை</string>
+    <string name="ai_no_speech">பேச்சு எதுவும் இல்லை</string>
+    <string name="ai_ready">AI வசனங்கள் தயார்</string>
+    <string name="ai_cancelled">AI வசனங்கள் ரத்து</string>
+    <string name="ai_failed">AI வசனங்கள் தோல்வி</string>
+    <string name="ai_lang_auto">தானியங்கி</string>
+    <string name="ai_fast">வேகம்</string>
+    <string name="ai_better">சிறந்தது</string>
+    <string name="ai_best">மிகச் சிறந்தது</string>
+    <string name="ai_spoken">வீடியோவில் பேசும் மொழி</string>
+    <string name="ai_quality">AI தரம் (ஒருமுறை பதிவிறக்கம்)</string>
+    <string name="ai_translate">ஆங்கிலத்தில் மொழிபெயர்</string>
+    <string name="ai_note">உங்கள் போனிலேயே இயங்கும்; வீடியோ வெளியே செல்லாது. 10 நிமிட வீடியோவுக்கு சுமார் 3–10 நிமிடம். English, Hindi சிறப்பாக வரும்; மற்ற மொழிகளுக்கு Better/Best பயன்படுத்தவும்.</string>
+    <string name="ai_generate">உருவாக்கு</string>
+    <string name="ai_use_saved">சேமித்ததை பயன்படுத்து</string>
+    <string name="ai_started">AI வசனங்கள் தொடங்கியது — அறிவிப்பில் முன்னேற்றம் பாருங்கள்</string>
 </resources>

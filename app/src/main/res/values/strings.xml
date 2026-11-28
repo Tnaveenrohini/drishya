@@ -312,4 +312,26 @@
     <string name="tr_no_media">No video or audio file in this torrent</string>
     <string name="tr_title">Torrents</string>
     <string name="tr_notif">%1$d downloading · %2$d%% · %3$s/s</string>
+    <string name="ai_subs">AI subtitles</string>
+    <string name="ai_unsupported">AI subtitles need a 64-bit phone.</string>
+    <string name="ai_model_failed">AI model download failed. Check internet and try again.</string>
+    <string name="ai_model_dl">Downloading AI model… %1$d%%</string>
+    <string name="ai_loading">Loading AI model…</string>
+    <string name="ai_working">Creating subtitles… %1$d%%</string>
+    <string name="ai_audio_failed">Couldn\'t read this video\'s audio</string>
+    <string name="ai_no_speech">No speech found</string>
+    <string name="ai_ready">AI subtitles ready</string>
+    <string name="ai_cancelled">AI subtitles cancelled</string>
+    <string name="ai_failed">AI subtitles failed</string>
+    <string name="ai_lang_auto">Auto</string>
+    <string name="ai_fast">Fast</string>
+    <string name="ai_better">Better</string>
+    <string name="ai_best">Best</string>
+    <string name="ai_spoken">Language spoken in video</string>
+    <string name="ai_quality">AI quality (one-time download)</string>
+    <string name="ai_translate">Translate to English</string>
+    <string name="ai_note">Runs on your phone; the video never leaves it. A 10-minute video takes about 3–10 minutes. English and Hindi work best; Better/Best quality helps other languages.</string>
+    <string name="ai_generate">Generate</string>
+    <string name="ai_use_saved">Use saved</string>
+    <string name="ai_started">AI subtitles started — see progress in notifications</string>
 </resources>

@@ -291,4 +291,26 @@
     <string name="tr_no_media">इस टोरेंट में वीडियो / ऑडियो फ़ाइल नहीं है</string>
     <string name="tr_title">टोरेंट</string>
     <string name="tr_notif">%1$d डाउनलोड हो रहे · %2$d%% · %3$s/s</string>
+    <string name="ai_subs">AI सबटाइटल</string>
+    <string name="ai_unsupported">AI सबटाइटल के लिए 64-bit फ़ोन चाहिए।</string>
+    <string name="ai_model_failed">AI मॉडल डाउनलोड विफल। इंटरनेट जाँचकर फिर कोशिश करें।</string>
+    <string name="ai_model_dl">AI मॉडल डाउनलोड हो रहा है… %1$d%%</string>
+    <string name="ai_loading">AI मॉडल लोड हो रहा है…</string>
+    <string name="ai_working">सबटाइटल बन रहे हैं… %1$d%%</string>
+    <string name="ai_audio_failed">इस वीडियो का ऑडियो पढ़ नहीं सका</string>
+    <string name="ai_no_speech">कोई आवाज़ नहीं मिली</string>
+    <string name="ai_ready">AI सबटाइटल तैयार</string>
+    <string name="ai_cancelled">AI सबटाइटल रद्द</string>
+    <string name="ai_failed">AI सबटाइटल विफल</string>
+    <string name="ai_lang_auto">ऑटो</string>
+    <string name="ai_fast">फ़ास्ट</string>
+    <string name="ai_better">बेहतर</string>
+    <string name="ai_best">बेस्ट</string>
+    <string name="ai_spoken">वीडियो में बोली जाने वाली भाषा</string>
+    <string name="ai_quality">AI क्वालिटी (एक बार डाउनलोड)</string>
+    <string name="ai_translate">अंग्रेज़ी में अनुवाद करें</string>
+    <string name="ai_note">आपके फ़ोन पर ही चलता है; वीडियो बाहर नहीं जाता। 10 मिनट के वीडियो में लगभग 3–10 मिनट लगते हैं। English और Hindi सबसे अच्छे; बाकी भाषाओं के लिए Better/Best चुनें।</string>
+    <string name="ai_generate">बनाएँ</string>
+    <string name="ai_use_saved">सेव किया हुआ</string>
+    <string name="ai_started">AI सबटाइटल शुरू — नोटिफ़िकेशन में प्रगति देखें</string>
 </resources>

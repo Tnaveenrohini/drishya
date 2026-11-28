@@ -305,4 +305,26 @@
     <string name="tr_no_media">ఈ టొరెంట్ లో వీడియో / ఆడియో ఫైల్ లేదు</string>
     <string name="tr_title">టొరెంట్స్</string>
     <string name="tr_notif">%1$d డౌన్‌లోడ్ అవుతున్నాయి · %2$d%% · %3$s/s</string>
+    <string name="ai_subs">AI సబ్‌టైటిల్స్</string>
+    <string name="ai_unsupported">AI సబ్‌టైటిల్స్ కి 64-bit ఫోన్ కావాలి.</string>
+    <string name="ai_model_failed">AI మోడల్ డౌన్‌లోడ్ ఫెయిల్. ఇంటర్నెట్ చెక్ చేసి మళ్ళీ ప్రయత్నించండి.</string>
+    <string name="ai_model_dl">AI మోడల్ డౌన్‌లోడ్ అవుతోంది… %1$d%%</string>
+    <string name="ai_loading">AI మోడల్ లోడ్ అవుతోంది…</string>
+    <string name="ai_working">సబ్‌టైటిల్స్ తయారవుతున్నాయి… %1$d%%</string>
+    <string name="ai_audio_failed">ఈ వీడియో ఆడియో చదవలేకపోయింది</string>
+    <string name="ai_no_speech">మాటలు దొరకలేదు</string>
+    <string name="ai_ready">AI సబ్‌టైటిల్స్ రెడీ</string>
+    <string name="ai_cancelled">AI సబ్‌టైటిల్స్ రద్దు</string>
+    <string name="ai_failed">AI సబ్‌టైటిల్స్ ఫెయిల్</string>
+    <string name="ai_lang_auto">ఆటో</string>
+    <string name="ai_fast">ఫాస్ట్</string>
+    <string name="ai_better">బెటర్</string>
+    <string name="ai_best">బెస్ట్</string>
+    <string name="ai_spoken">వీడియోలో మాట్లాడే భాష</string>
+    <string name="ai_quality">AI క్వాలిటీ (ఒక్కసారి డౌన్‌లోడ్)</string>
+    <string name="ai_translate">ఇంగ్లీష్ లోకి అనువదించు</string>
+    <string name="ai_note">మీ ఫోన్‌లోనే పని చేస్తుంది, వీడియో బయటికి వెళ్ళదు. 10 నిమిషాల వీడియోకి సుమారు 3–10 నిమిషాలు. English, Hindi బాగా వస్తాయి; వేరే భాషలకి Better/Best వాడండి.</string>
+    <string name="ai_generate">తయారు చేయి</string>
+    <string name="ai_use_saved">సేవ్ అయినది వాడు</string>
+    <string name="ai_started">AI సబ్‌టైటిల్స్ మొదలైంది — నోటిఫికేషన్‌లో ప్రోగ్రెస్ చూడండి</string>
 </resources>

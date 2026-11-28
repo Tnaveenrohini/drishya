@@ -13,8 +13,15 @@ android {
         applicationId = "com.flikk.player"
         minSdk = 26
         targetSdk = 36
-        versionCode = 24
-        versionName = "2.8.0"
+        // AI Subtitles native lib: 64-bit phones kosam matrame build
+        externalNativeBuild {
+            cmake {
+                abiFilters += listOf("arm64-v8a")
+                arguments += listOf("-DCMAKE_BUILD_TYPE=Release", "-DANDROID_STL=c++_static")
+            }
+        }
+        versionCode = 25
+        versionName = "2.9.0"
     }
 
     // Signing: GitHub Secrets lo unna private release key matrame (repo lo key ledu).
@@ -46,6 +53,13 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
     }
 
     packaging {
