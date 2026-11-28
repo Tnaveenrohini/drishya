@@ -99,6 +99,10 @@ object TorrentEngine {
         }
     }
 
+    /** Mundu add chesina torrents unte matrame engine start (tab open chesinappudu). */
+    fun hasSaved(c: Context): Boolean =
+        c.getSharedPreferences("torrents", Context.MODE_PRIVATE).getString("src", "")!!.isNotBlank()
+
     /** true = add ayyindi. */
     fun addMagnet(c: Context, magnet: String): Boolean {
         if (!magnet.startsWith("magnet:?")) return false
@@ -109,8 +113,12 @@ object TorrentEngine {
         return true
     }
 
-    fun addTorrentFile(c: Context, uri: Uri): Boolean = try {
+    fun addTorrentFile(c: Context, uri: Uri): Boolean {
         ensure(c)
+        return addFileInternal(c, uri)
+    }
+
+    private fun addFileInternal(c: Context, uri: Uri): Boolean = try {
         val bytes = c.contentResolver.openInputStream(uri)!!.use { it.readBytes() }
         TorrentInfo.bdecode(bytes) // valid aa ani check
         val dir = File(c.filesDir, "torrents").apply { mkdirs() }
@@ -232,7 +240,13 @@ class TorrentService : Service() {
         val n = build(getString(R.string.dl_preparing), 0)
         if (Build.VERSION.SDK_INT >= 29) startForeground(NOTIF_ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
         else startForeground(NOTIF_ID, n)
-        TorrentEngine.ensure(this)
+        try {
+            TorrentEngine.ensure(this)
+        } catch (_: Throwable) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            stopSelf()
+            return START_NOT_STICKY
+        }
         handler.removeCallbacks(tick)
         handler.postDelayed(tick, 3000)
         return START_NOT_STICKY

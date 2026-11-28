@@ -334,4 +334,6 @@
     <string name="ai_generate">Generate</string>
     <string name="ai_use_saved">Use saved</string>
     <string name="ai_started">AI subtitles started — see progress in notifications</string>
+    <string name="tr_error">Torrent error</string>
+    <string name="crash_title">Flikk Play closed last time</string>
 </resources>

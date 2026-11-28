@@ -20,8 +20,8 @@ android {
                 arguments += listOf("-DCMAKE_BUILD_TYPE=Release", "-DANDROID_STL=c++_static")
             }
         }
-        versionCode = 25
-        versionName = "2.9.0"
+        versionCode = 26
+        versionName = "2.9.1"
     }
 
     // Signing: GitHub Secrets lo unna private release key matrame (repo lo key ledu).

@@ -327,4 +327,6 @@
     <string name="ai_generate">తయారు చేయి</string>
     <string name="ai_use_saved">సేవ్ అయినది వాడు</string>
     <string name="ai_started">AI సబ్‌టైటిల్స్ మొదలైంది — నోటిఫికేషన్‌లో ప్రోగ్రెస్ చూడండి</string>
+    <string name="tr_error">టొరెంట్ ఎర్రర్</string>
+    <string name="crash_title">గత సారి Flikk Play క్లోజ్ అయ్యింది</string>
 </resources>

@@ -221,6 +221,17 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        CrashLog.take(this)?.let { report ->
+            MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.crash_title)
+                .setMessage(report.take(900))
+                .setPositiveButton(R.string.share) { _, _ ->
+                    startActivity(Intent.createChooser(
+                        Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, report), null))
+                }
+                .setNegativeButton(android.R.string.ok, null)
+                .show()
+        }
         launching = false
         refresh()
     }

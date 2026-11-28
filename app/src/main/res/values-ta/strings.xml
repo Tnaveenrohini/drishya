@@ -313,4 +313,6 @@
     <string name="ai_generate">உருவாக்கு</string>
     <string name="ai_use_saved">சேமித்ததை பயன்படுத்து</string>
     <string name="ai_started">AI வசனங்கள் தொடங்கியது — அறிவிப்பில் முன்னேற்றம் பாருங்கள்</string>
+    <string name="tr_error">டொரன்ட் பிழை</string>
+    <string name="crash_title">கடந்த முறை Flikk Play மூடியது</string>
 </resources>

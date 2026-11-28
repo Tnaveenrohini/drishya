@@ -218,7 +218,15 @@ class DownloaderActivity : AppCompatActivity() {
         pageTorrent.visibility = if (t == TAB_TORRENT) View.VISIBLE else View.GONE
         if (t == TAB_STATUS) loadStatuses()
         if (t == TAB_TORRENT) {
-            io.execute { TorrentEngine.ensure(applicationContext) }
+            if (TorrentEngine.hasSaved(this)) {
+                io.execute {
+                    try {
+                        TorrentEngine.ensure(applicationContext)
+                    } catch (e: Throwable) {
+                        handler.post { showError(e) }
+                    }
+                }
+            }
             renderTorrents()
         }
     }
@@ -239,7 +247,12 @@ class DownloaderActivity : AppCompatActivity() {
         }
         askNotif()
         io.execute {
-            val ok = TorrentEngine.addMagnet(applicationContext, m)
+            val ok = try {
+                TorrentEngine.addMagnet(applicationContext, m)
+            } catch (e: Throwable) {
+                handler.post { showError(e) }
+                return@execute
+            }
             handler.post {
                 toast(getString(if (ok) R.string.tr_added else R.string.tr_bad))
                 if (ok) trMagnet.setText("")
@@ -251,12 +264,31 @@ class DownloaderActivity : AppCompatActivity() {
     private fun addTorrentUri(uri: Uri) {
         askNotif()
         io.execute {
-            val ok = TorrentEngine.addTorrentFile(applicationContext, uri)
+            val ok = try {
+                TorrentEngine.addTorrentFile(applicationContext, uri)
+            } catch (e: Throwable) {
+                handler.post { showError(e) }
+                return@execute
+            }
             handler.post {
                 toast(getString(if (ok) R.string.tr_added else R.string.tr_bad))
                 renderTorrents()
             }
         }
+    }
+
+    /** Error ni screen meeda chupinchi, copy / share cheyyochu. */
+    private fun showError(e: Throwable) {
+        val text = CrashLog.text(e)
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.tr_error)
+            .setMessage(text.take(900))
+            .setPositiveButton(R.string.share) { _, _ ->
+                startActivity(Intent.createChooser(
+                    Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text), null))
+            }
+            .setNegativeButton(android.R.string.ok, null)
+            .show()
     }
 
     private fun renderTorrents() {

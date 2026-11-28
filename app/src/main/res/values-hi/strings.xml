@@ -313,4 +313,6 @@
     <string name="ai_generate">बनाएँ</string>
     <string name="ai_use_saved">सेव किया हुआ</string>
     <string name="ai_started">AI सबटाइटल शुरू — नोटिफ़िकेशन में प्रगति देखें</string>
+    <string name="tr_error">टोरेंट एरर</string>
+    <string name="crash_title">पिछली बार Flikk Play बंद हो गया</string>
 </resources>
