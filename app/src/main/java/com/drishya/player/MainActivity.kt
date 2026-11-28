@@ -1239,6 +1239,10 @@ class MainActivity : AppCompatActivity() {
 
     // ------------------------------------------------------------ network (PC / NAS)
 
+    private fun openDownloader(tab: Int) {
+        startActivity(Intent(this, DownloaderActivity::class.java).putExtra(DownloaderActivity.EXTRA_TAB, tab))
+    }
+
     private fun renderNetwork() {
         val server = openServer
         if (server == null) {
@@ -1251,7 +1255,13 @@ class MainActivity : AppCompatActivity() {
                     onLongClick = { confirmRemoveServer(s) },
                 )
             } + Row(getString(R.string.add_server), "", R.drawable.ic_add, onClick = { addServerDialog() })
-            recycler.adapter = RowAdapter(rows)
+            val tools = listOf(
+                Row(getString(R.string.dl_link_row), getString(R.string.dl_link_row_sub), R.drawable.ic_download,
+                    onClick = { openDownloader(DownloaderActivity.TAB_LINK) }),
+                Row(getString(R.string.dl_status_row), getString(R.string.dl_status_row_sub), R.drawable.ic_status,
+                    onClick = { openDownloader(DownloaderActivity.TAB_STATUS) }),
+            )
+            recycler.adapter = RowAdapter(tools + rows)
             return
         }
         subTitle.text = server.label

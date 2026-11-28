@@ -13,8 +13,8 @@ android {
         applicationId = "com.flikk.player"
         minSdk = 26
         targetSdk = 36
-        versionCode = 22
-        versionName = "2.6.0"
+        versionCode = 23
+        versionName = "2.7.0"
     }
 
     // Signing: GitHub Secrets lo unna private release key matrame (repo lo key ledu).
@@ -80,6 +80,7 @@ dependencies {
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("androidx.biometric:biometric:1.1.0")
+    implementation("androidx.documentfile:documentfile:1.0.1")
     implementation("com.google.android.gms:play-services-cast-framework:22.1.0")
     implementation("androidx.mediarouter:mediarouter:1.7.0")
 

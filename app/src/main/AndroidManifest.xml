@@ -15,6 +15,7 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
@@ -89,6 +90,24 @@
                 <action android:name="androidx.media3.session.MediaSessionService" />
             </intent-filter>
         </service>
+
+        <activity
+            android:name=".DownloaderActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:label="@string/downloader"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter android:label="@string/dl_share_label">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".FetchService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
 
         <!-- App language (Telugu / English) Android 12 and below lo gurtupettukovadaniki -->
         <service

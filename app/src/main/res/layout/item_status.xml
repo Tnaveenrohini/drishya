@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="4dp">
+
+    <com.drishya.player.SquareFrameLayout
+        android:id="@+id/st_box"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_thumb">
+
+        <ImageView
+            android:id="@+id/st_thumb"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@null"
+            android:scaleType="centerCrop" />
+
+        <ImageView
+            android:id="@+id/st_play"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_btn_ghost"
+            android:contentDescription="@null"
+            android:padding="8dp"
+            android:src="@drawable/ic_play" />
+
+        <ImageButton
+            android:id="@+id/st_save"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="6dp"
+            android:background="@drawable/bg_play_white"
+            android:contentDescription="@string/st_save"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_download"
+            android:tint="#000000" />
+    </com.drishya.player.SquareFrameLayout>
+</FrameLayout>
