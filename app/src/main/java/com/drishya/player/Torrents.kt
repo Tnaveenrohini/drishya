@@ -141,7 +141,7 @@ object TorrentEngine {
     fun active(): List<TorrentHandle> = handles.filter { h ->
         try {
             val st = h.status()
-            h.isValid && !st.isFinished && !st.flags().and_(org.libtorrent4j.TorrentFlags.PAUSED).to_int() != 0
+            h.isValid && !st.isFinished && st.flags().and_(org.libtorrent4j.TorrentFlags.PAUSED).to_int() == 0
         } catch (_: Throwable) {
             false
         }
