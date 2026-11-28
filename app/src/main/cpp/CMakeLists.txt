@@ -19,7 +19,6 @@ set(GGML_LLAMAFILE OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(
     whisper
     URL https://github.com/ggml-org/whisper.cpp/archive/refs/tags/v1.9.6.tar.gz
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 FetchContent_MakeAvailable(whisper)
 
