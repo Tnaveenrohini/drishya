@@ -294,4 +294,22 @@
     <string name="st_empty">No statuses yet. View some statuses in WhatsApp, then come back.</string>
     <string name="st_save">Save</string>
     <string name="st_saved">Saved to gallery</string>
+    <string name="dl_tab_torrent">Torrents</string>
+    <string name="tr_hint">Paste magnet link</string>
+    <string name="tr_add">Add magnet</string>
+    <string name="tr_open">.torrent file</string>
+    <string name="tr_note">Download only content you have the right to share. You are responsible for what you download.</string>
+    <string name="tr_caps">TORRENTS</string>
+    <string name="tr_none">No torrents yet</string>
+    <string name="tr_bad">Not a valid magnet link or torrent file</string>
+    <string name="tr_added">Torrent added</string>
+    <string name="tr_paused">Paused</string>
+    <string name="tr_meta">Getting file info from peers…</string>
+    <string name="tr_checking">Checking files…</string>
+    <string name="tr_peers">%1$d peers</string>
+    <string name="tr_remove_keep">Remove (keep files)</string>
+    <string name="tr_remove_delete">Remove and delete files</string>
+    <string name="tr_no_media">No video or audio file in this torrent</string>
+    <string name="tr_title">Torrents</string>
+    <string name="tr_notif">%1$d downloading · %2$d%% · %3$s/s</string>
 </resources>

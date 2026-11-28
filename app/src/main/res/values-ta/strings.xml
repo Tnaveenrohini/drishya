@@ -273,4 +273,22 @@
     <string name="st_empty">இன்னும் ஸ்டேட்டஸ் இல்லை. WhatsApp-இல் சில ஸ்டேட்டஸ்களைப் பார்த்துவிட்டு வாருங்கள்.</string>
     <string name="st_save">சேமி</string>
     <string name="st_saved">கேலரியில் சேமிக்கப்பட்டது</string>
+    <string name="dl_tab_torrent">டொரன்ட்ஸ்</string>
+    <string name="tr_hint">மேக்னெட் இணைப்பை ஒட்டவும்</string>
+    <string name="tr_add">மேக்னெட் சேர்</string>
+    <string name="tr_open">.torrent கோப்பு</string>
+    <string name="tr_note">உரிமை உள்ள உள்ளடக்கத்தை மட்டும் பதிவிறக்கவும். நீங்கள் பதிவிறக்குவதற்கு நீங்களே பொறுப்பு.</string>
+    <string name="tr_caps">டொரன்ட்ஸ்</string>
+    <string name="tr_none">இன்னும் டொரன்ட் இல்லை</string>
+    <string name="tr_bad">சரியான மேக்னெட் இணைப்பு / டொரன்ட் கோப்பு அல்ல</string>
+    <string name="tr_added">டொரன்ட் சேர்க்கப்பட்டது</string>
+    <string name="tr_paused">இடைநிறுத்தம்</string>
+    <string name="tr_meta">பியர்களிடமிருந்து கோப்பு விவரம் பெறுகிறது…</string>
+    <string name="tr_checking">கோப்புகளைச் சரிபார்க்கிறது…</string>
+    <string name="tr_peers">%1$d பியர்கள்</string>
+    <string name="tr_remove_keep">நீக்கு (கோப்புகளை வை)</string>
+    <string name="tr_remove_delete">நீக்கி கோப்புகளையும் அழி</string>
+    <string name="tr_no_media">இந்த டொரன்டில் வீடியோ / ஆடியோ கோப்பு இல்லை</string>
+    <string name="tr_title">டொரன்ட்ஸ்</string>
+    <string name="tr_notif">%1$d பதிவிறக்கம் · %2$d%% · %3$s/s</string>
 </resources>

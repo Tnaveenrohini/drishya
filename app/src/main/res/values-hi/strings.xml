@@ -273,4 +273,22 @@
     <string name="st_empty">अभी कोई स्टेटस नहीं। WhatsApp में कुछ स्टेटस देखकर वापस आएँ।</string>
     <string name="st_save">सेव</string>
     <string name="st_saved">गैलरी में सेव हुआ</string>
+    <string name="dl_tab_torrent">टोरेंट</string>
+    <string name="tr_hint">मैग्नेट लिंक पेस्ट करें</string>
+    <string name="tr_add">मैग्नेट जोड़ें</string>
+    <string name="tr_open">.torrent फ़ाइल</string>
+    <string name="tr_note">सिर्फ़ वही कंटेंट डाउनलोड करें जिसका आपको अधिकार है। डाउनलोड की ज़िम्मेदारी आपकी है।</string>
+    <string name="tr_caps">टोरेंट</string>
+    <string name="tr_none">अभी कोई टोरेंट नहीं</string>
+    <string name="tr_bad">यह सही मैग्नेट लिंक या टोरेंट फ़ाइल नहीं है</string>
+    <string name="tr_added">टोरेंट जोड़ा गया</string>
+    <string name="tr_paused">रुका हुआ</string>
+    <string name="tr_meta">पीयर्स से फ़ाइल जानकारी ले रहे हैं…</string>
+    <string name="tr_checking">फ़ाइलें जाँच रहे हैं…</string>
+    <string name="tr_peers">%1$d पीयर्स</string>
+    <string name="tr_remove_keep">हटाएँ (फ़ाइलें रखें)</string>
+    <string name="tr_remove_delete">हटाएँ और फ़ाइलें डिलीट करें</string>
+    <string name="tr_no_media">इस टोरेंट में वीडियो / ऑडियो फ़ाइल नहीं है</string>
+    <string name="tr_title">टोरेंट</string>
+    <string name="tr_notif">%1$d डाउनलोड हो रहे · %2$d%% · %3$s/s</string>
 </resources>

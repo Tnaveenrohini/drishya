@@ -287,4 +287,22 @@
     <string name="st_empty">ఇంకా స్టేటస్‌లు లేవు. WhatsApp లో కొన్ని స్టేటస్‌లు చూసి మళ్ళీ రండి.</string>
     <string name="st_save">సేవ్</string>
     <string name="st_saved">గ్యాలరీ లో సేవ్ అయ్యింది</string>
+    <string name="dl_tab_torrent">టొరెంట్స్</string>
+    <string name="tr_hint">మ్యాగ్నెట్ లింక్ పేస్ట్ చేయండి</string>
+    <string name="tr_add">మ్యాగ్నెట్ జోడించు</string>
+    <string name="tr_open">.torrent ఫైల్</string>
+    <string name="tr_note">మీకు హక్కు ఉన్న కంటెంట్ మాత్రమే డౌన్‌లోడ్ చేయండి. మీరు డౌన్‌లోడ్ చేసే దానికి మీరే బాధ్యులు.</string>
+    <string name="tr_caps">టొరెంట్స్</string>
+    <string name="tr_none">ఇంకా టొరెంట్స్ లేవు</string>
+    <string name="tr_bad">ఇది సరైన మ్యాగ్నెట్ లింక్ / టొరెంట్ ఫైల్ కాదు</string>
+    <string name="tr_added">టొరెంట్ జోడించబడింది</string>
+    <string name="tr_paused">పాజ్</string>
+    <string name="tr_meta">పీర్స్ నుండి ఫైల్ వివరాలు తెస్తోంది…</string>
+    <string name="tr_checking">ఫైల్స్ చెక్ చేస్తోంది…</string>
+    <string name="tr_peers">%1$d పీర్స్</string>
+    <string name="tr_remove_keep">తీసేయి (ఫైల్స్ ఉంచు)</string>
+    <string name="tr_remove_delete">తీసేసి ఫైల్స్ కూడా డిలీట్ చేయి</string>
+    <string name="tr_no_media">ఈ టొరెంట్ లో వీడియో / ఆడియో ఫైల్ లేదు</string>
+    <string name="tr_title">టొరెంట్స్</string>
+    <string name="tr_notif">%1$d డౌన్‌లోడ్ అవుతున్నాయి · %2$d%% · %3$s/s</string>
 </resources>

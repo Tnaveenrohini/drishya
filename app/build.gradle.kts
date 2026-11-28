@@ -13,8 +13,8 @@ android {
         applicationId = "com.flikk.player"
         minSdk = 26
         targetSdk = 36
-        versionCode = 23
-        versionName = "2.7.0"
+        versionCode = 24
+        versionName = "2.8.0"
     }
 
     // Signing: GitHub Secrets lo unna private release key matrame (repo lo key ledu).
@@ -81,6 +81,11 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.documentfile:documentfile:1.0.1")
+    // Torrent engine (libtorrent) — phones kosam arm64 + arm32 matrame
+    val lt4j = "2.1.0-39"
+    implementation("org.libtorrent4j:libtorrent4j:$lt4j")
+    implementation("org.libtorrent4j:libtorrent4j-android-arm64:$lt4j")
+    implementation("org.libtorrent4j:libtorrent4j-android-arm:$lt4j")
     implementation("com.google.android.gms:play-services-cast-framework:22.1.0")
     implementation("androidx.mediarouter:mediarouter:1.7.0")
 

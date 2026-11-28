@@ -43,6 +43,7 @@ class DownloaderActivity : AppCompatActivity() {
         const val EXTRA_TAB = "tab"
         const val TAB_LINK = 0
         const val TAB_STATUS = 1
+        const val TAB_TORRENT = 2
         private val URL_RE = Regex("https?://\\S+")
     }
 
@@ -57,13 +58,17 @@ class DownloaderActivity : AppCompatActivity() {
     private lateinit var pageStatus: View
     private lateinit var grid: RecyclerView
     private lateinit var stEmpty: View
+    private lateinit var pageTorrent: View
+    private lateinit var trList: LinearLayout
+    private lateinit var trMagnet: EditText
     private var info: LinkInfo? = null
     private var quality = 0
     private val prefs by lazy { getSharedPreferences("downloads", MODE_PRIVATE) }
 
     private val refresher = object : Runnable {
         override fun run() {
-            renderDownloads()
+            if (pageLink.visibility == View.VISIBLE) renderDownloads()
+            if (pageTorrent.visibility == View.VISIBLE) renderTorrents()
             handler.postDelayed(this, 1000)
         }
     }
@@ -80,6 +85,10 @@ class DownloaderActivity : AppCompatActivity() {
         }
     }
 
+    private val pickTorrent = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) addTorrentUri(uri)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_downloader)
@@ -94,12 +103,34 @@ class DownloaderActivity : AppCompatActivity() {
         pageStatus = findViewById(R.id.page_status)
         grid = findViewById(R.id.st_grid)
         stEmpty = findViewById(R.id.st_empty)
+        pageTorrent = findViewById(R.id.page_torrent)
+        trList = findViewById(R.id.tr_list)
+        trMagnet = findViewById(R.id.tr_magnet)
+        findViewById<View>(R.id.tr_paste).setOnClickListener {
+            val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val text = cm.primaryClip?.getItemAt(0)?.coerceToText(this)?.toString().orEmpty()
+            trMagnet.setText(Regex("magnet:\\?\\S+").find(text)?.value ?: text.trim())
+        }
+        findViewById<View>(R.id.tr_add).setOnClickListener { addMagnet(trMagnet.text.toString().trim()) }
+        trMagnet.setOnEditorActionListener { _, id, _ ->
+            if (id == EditorInfo.IME_ACTION_GO) {
+                addMagnet(trMagnet.text.toString().trim())
+                true
+            } else false
+        }
+        findViewById<View>(R.id.tr_open).setOnClickListener {
+            try {
+                pickTorrent.launch(arrayOf("application/x-bittorrent", "application/octet-stream"))
+            } catch (_: Exception) {
+            }
+        }
         grid.layoutManager = GridLayoutManager(this, 3)
         findViewById<View>(R.id.dl_thumb_box).clipToOutline = true
 
         val tabs = findViewById<TabLayout>(R.id.dl_tabs)
         tabs.addTab(tabs.newTab().setText(R.string.dl_tab_link))
         tabs.addTab(tabs.newTab().setText(R.string.dl_tab_status))
+        tabs.addTab(tabs.newTab().setText(R.string.dl_tab_torrent))
         tabs.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(t: TabLayout.Tab) = showTab(t.position)
             override fun onTabUnselected(t: TabLayout.Tab) {}
@@ -155,19 +186,177 @@ class DownloaderActivity : AppCompatActivity() {
 
     private fun toast(s: String) = Toast.makeText(this, s, Toast.LENGTH_SHORT).show()
 
-    /** Vere app nunchi "Share → Flikk Play" chesina link. */
+    /** Vere app nunchi "Share → Flikk Play" chesina link, magnet, .torrent file. */
     private fun handleShare(i: Intent?) {
-        if (i?.action != Intent.ACTION_SEND) return
+        if (i == null) return
+        if (i.action == Intent.ACTION_VIEW) {
+            val data = i.data ?: return
+            selectTab(TAB_TORRENT)
+            if (data.scheme == "magnet") addMagnet(data.toString()) else addTorrentUri(data)
+            return
+        }
+        if (i.action != Intent.ACTION_SEND) return
         val text = i.getStringExtra(Intent.EXTRA_TEXT) ?: return
+        Regex("magnet:\\?\\S+").find(text)?.value?.let {
+            selectTab(TAB_TORRENT)
+            addMagnet(it)
+            return
+        }
         val url = URL_RE.find(text)?.value ?: return
         urlBox.setText(url)
         probe()
     }
 
+    private fun selectTab(t: Int) {
+        findViewById<TabLayout>(R.id.dl_tabs).getTabAt(t)?.select()
+        showTab(t)
+    }
+
     private fun showTab(t: Int) {
         pageLink.visibility = if (t == TAB_LINK) View.VISIBLE else View.GONE
         pageStatus.visibility = if (t == TAB_STATUS) View.VISIBLE else View.GONE
+        pageTorrent.visibility = if (t == TAB_TORRENT) View.VISIBLE else View.GONE
         if (t == TAB_STATUS) loadStatuses()
+        if (t == TAB_TORRENT) {
+            io.execute { TorrentEngine.ensure(applicationContext) }
+            renderTorrents()
+        }
+    }
+
+    // ================================================================ Torrents
+
+    private fun askNotif() {
+        if (Build.VERSION.SDK_INT >= 33 &&
+            ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) !=
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 7)
+    }
+
+    private fun addMagnet(m: String) {
+        if (!m.startsWith("magnet:?")) {
+            toast(getString(R.string.tr_bad))
+            return
+        }
+        askNotif()
+        io.execute {
+            val ok = TorrentEngine.addMagnet(applicationContext, m)
+            handler.post {
+                toast(getString(if (ok) R.string.tr_added else R.string.tr_bad))
+                if (ok) trMagnet.setText("")
+                renderTorrents()
+            }
+        }
+    }
+
+    private fun addTorrentUri(uri: Uri) {
+        askNotif()
+        io.execute {
+            val ok = TorrentEngine.addTorrentFile(applicationContext, uri)
+            handler.post {
+                toast(getString(if (ok) R.string.tr_added else R.string.tr_bad))
+                renderTorrents()
+            }
+        }
+    }
+
+    private fun renderTorrents() {
+        val hs = TorrentEngine.handles.filter { try { it.isValid } catch (_: Throwable) { false } }
+        findViewById<View>(R.id.tr_none).visibility = if (hs.isEmpty()) View.VISIBLE else View.GONE
+        trList.removeAllViews()
+        hs.forEach { h -> trList.addView(torrentRow(h)) }
+    }
+
+    private fun torrentRow(h: org.libtorrent4j.TorrentHandle): View {
+        val st = try { h.status() } catch (_: Throwable) { null }
+        val name = (try { h.name } catch (_: Throwable) { null }) ?: st?.name() ?: "Torrent"
+        val paused = st != null && st.flags().and_(org.libtorrent4j.TorrentFlags.PAUSED).to_int() != 0
+        val finished = st?.isFinished == true
+        val pct = ((st?.progress() ?: 0f) * 100).toInt()
+        val stateText = when {
+            st == null -> ""
+            finished -> getString(R.string.dl_done) + " · " + formatSize(st.totalWanted())
+            paused -> getString(R.string.tr_paused) + " · $pct%"
+            st.state() == org.libtorrent4j.TorrentStatus.State.DOWNLOADING_METADATA -> getString(R.string.tr_meta)
+            st.state() == org.libtorrent4j.TorrentStatus.State.CHECKING_FILES -> getString(R.string.tr_checking)
+            else -> "$pct% · ${formatSize(st.downloadPayloadRate().toLong())}/s · " +
+                getString(R.string.tr_peers, st.numPeers())
+        }
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(14), dp(12), dp(6), dp(12))
+            background = ContextCompat.getDrawable(this@DownloaderActivity, R.drawable.bg_card)
+            isClickable = true
+        }
+        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        col.addView(TextView(this).apply {
+            text = name
+            setTextColor(0xFFFFFFFF.toInt())
+            textSize = 14f
+            maxLines = 2
+            ellipsize = android.text.TextUtils.TruncateAt.END
+        })
+        col.addView(TextView(this).apply {
+            text = stateText
+            setTextColor(0xFFA3A3A3.toInt())
+            textSize = 12f
+        })
+        if (!finished) {
+            col.addView(ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
+                max = 100
+                progress = pct
+                progressTintList = android.content.res.ColorStateList.valueOf(0xFFFFFFFF.toInt())
+                progressBackgroundTintList = android.content.res.ColorStateList.valueOf(0x40FFFFFF)
+            }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(6)).apply { topMargin = dp(6) })
+        }
+        row.addView(col, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        val btn = android.widget.ImageButton(this).apply {
+            background = null
+            setImageResource(
+                when {
+                    finished -> R.drawable.ic_play
+                    paused -> R.drawable.ic_download
+                    else -> R.drawable.ic_pause
+                }
+            )
+            imageTintList = android.content.res.ColorStateList.valueOf(0xFFFFFFFF.toInt())
+            setOnClickListener {
+                when {
+                    finished -> playTorrent(h)
+                    paused -> {
+                        h.resume()
+                        TorrentService.start(this@DownloaderActivity)
+                    }
+                    else -> h.pause()
+                }
+                renderTorrents()
+            }
+        }
+        row.addView(btn, LinearLayout.LayoutParams(dp(48), dp(48)))
+        row.setOnClickListener { if (finished) playTorrent(h) }
+        row.setOnLongClickListener {
+            MaterialAlertDialogBuilder(this)
+                .setTitle(name)
+                .setItems(arrayOf(getString(R.string.tr_remove_keep), getString(R.string.tr_remove_delete))) { _, which ->
+                    TorrentEngine.remove(this, h, deleteFiles = which == 1)
+                    renderTorrents()
+                }
+                .show()
+            true
+        }
+        return LinearLayout(this).apply {
+            setPadding(0, dp(4), 0, dp(4))
+            addView(row, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        }
+    }
+
+    private fun playTorrent(h: org.libtorrent4j.TorrentHandle) {
+        val f = TorrentEngine.mainMedia(h)
+        if (f == null || !f.exists()) {
+            toast(getString(R.string.tr_no_media))
+            return
+        }
+        play(Uri.fromFile(f))
     }
 
     // ================================================================ Link downloader
